@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Methodology — LoxeAI</title>
+<meta name="description" content="How the Evidence Tracer actually works. Architecture, control mapping, scoring, and an honest note on what we're not yet claiming." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,200;0,9..144,300;0,9..144,400;1,9..144,200;1,9..144,300&family=JetBrains+Mono:wght@300;400;500&family=Inter+Tight:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0c0d;
+    --bg-1:#0e1112;
+    --bg-2:#13171a;
+    --bg-deep:#06080a;
+    --line:#1a1f23;
+    --line-2:#262d33;
+    --ink:#ece9e0;
+    --ink-2:#9ea59f;
+    --ink-3:#5e6661;
+    --ink-4:#363c40;
+    --acc:#bfff5a;
+    --acc-warm:#e8c07a;
+    --acc-red:#ff6a55;
+    --acc-cool:#7ab9ff;
+    --display:'Fraunces', serif;
+    --mono:'JetBrains Mono', ui-monospace, monospace;
+    --sans:'Inter Tight', system-ui, sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--bg);color:var(--ink);font-family:var(--sans);font-weight:300;
+    -webkit-font-smoothing:antialiased;overflow-x:hidden;
+    background-image:
+      radial-gradient(ellipse at 20% 0%, rgba(191,255,90,0.03), transparent 50%);
+  }
+  body::before{
+    content:'';position:fixed;inset:0;pointer-events:none;z-index:1000;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/><feColorMatrix values='0 0 0 0 0.92 0 0 0 0 0.9 0 0 0 0 0.85 0 0 0 0.4 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/></svg>");
+    opacity:.06;mix-blend-mode:overlay;
+  }
+  ::selection{background:var(--acc);color:#000}
+  a{color:inherit;text-decoration:none}
+
+  /* NAV */
+  .nav{
+    position:fixed;top:0;left:0;right:0;z-index:100;
+    display:flex;align-items:center;justify-content:space-between;
+    padding:18px 32px;backdrop-filter:blur(14px);
+    background:rgba(10,12,13,0.55);border-bottom:1px solid var(--line);
+  }
+  .brand{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-size:13px;letter-spacing:0.02em;font-weight:500}
+  .brand-mark{width:22px;height:22px}
+  .brand-mark svg{width:100%;height:100%;display:block}
+  .brand-tag{color:var(--ink-3);font-size:10px;letter-spacing:0.2em;text-transform:uppercase;border-left:1px solid var(--line-2);padding-left:10px;margin-left:4px}
+  .nav-back{font-family:var(--mono);font-size:12px;color:var(--ink-2);transition:color .2s;display:flex;align-items:center;gap:8px}
+  .nav-back:hover{color:var(--ink)}
+  @media(max-width:780px){.nav{padding:14px 18px}}
+
+  /* HEADER */
+  .page-header{padding:180px 32px 80px;max-width:980px;margin:0 auto;position:relative}
+  @media(max-width:780px){.page-header{padding:130px 18px 50px}}
+  .eyebrow{
+    font-family:var(--mono);font-size:11px;letter-spacing:0.3em;text-transform:uppercase;color:var(--acc);
+    margin-bottom:32px;display:flex;align-items:center;gap:14px;
+  }
+  .eyebrow::before{content:'';width:36px;height:1px;background:var(--acc)}
+  h1{
+    font-family:var(--display);font-weight:200;
+    font-size:clamp(48px,7vw,96px);line-height:0.98;letter-spacing:-0.02em;
+    margin-bottom:32px;word-spacing:0.02em;
+  }
+  h1 em{font-style:italic;color:var(--ink-2);margin:0 0.04em}
+  h1 .accent{color:var(--acc);font-style:normal;font-weight:300}
+  .page-lede{font-size:19px;line-height:1.55;color:var(--ink-2);max-width:700px;font-weight:300}
+  .updated{
+    font-family:var(--mono);font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:var(--ink-3);
+    margin-top:40px;padding-top:24px;border-top:1px solid var(--line);
+    display:flex;gap:32px;flex-wrap:wrap;
+  }
+  .updated b{color:var(--ink-2);font-weight:400}
+
+  /* CONTENT */
+  .content{
+    max-width:980px;margin:0 auto;padding:40px 32px 120px;
+    display:grid;grid-template-columns:220px 1fr;gap:80px;align-items:start;
+  }
+  @media(max-width:980px){.content{grid-template-columns:1fr;gap:40px;padding:30px 18px 80px}}
+
+  .sidebar{
+    position:sticky;top:120px;
+    font-family:var(--mono);font-size:11px;letter-spacing:0.1em;
+    display:flex;flex-direction:column;gap:12px;
+  }
+  @media(max-width:980px){.sidebar{position:static;flex-direction:row;flex-wrap:wrap;gap:8px;padding-bottom:24px;border-bottom:1px solid var(--line)}}
+  .sidebar a{
+    color:var(--ink-3);padding:8px 0;border-left:1px solid var(--line);padding-left:14px;
+    transition:all .25s;text-transform:uppercase;
+  }
+  @media(max-width:980px){.sidebar a{border-left:none;border:1px solid var(--line);padding:8px 12px}}
+  .sidebar a:hover{color:var(--ink);border-color:var(--acc)}
+  .sidebar a.active{color:var(--acc);border-color:var(--acc)}
+
+  .article section{margin-bottom:80px;scroll-margin-top:120px}
+  .article h2{
+    font-family:var(--display);font-weight:300;
+    font-size:clamp(30px,3.6vw,44px);line-height:1.1;letter-spacing:-0.015em;
+    margin-bottom:28px;word-spacing:0.02em;
+  }
+  .article h2 em{font-style:italic;color:var(--ink-2);margin:0 0.04em}
+  .article h2 .accent{color:var(--acc);font-style:normal}
+  .article h3{
+    font-family:var(--display);font-weight:400;font-style:italic;
+    font-size:22px;line-height:1.2;color:var(--ink);margin:32px 0 14px;letter-spacing:-0.01em;
+  }
+  .article p{
+    font-size:17px;line-height:1.7;color:var(--ink-2);margin-bottom:18px;max-width:720px;
+  }
+  .article p strong{color:var(--ink);font-weight:400}
+  .article code{
+    font-family:var(--mono);font-size:14px;background:var(--bg-1);padding:2px 7px;
+    border:1px solid var(--line);color:var(--acc-cool);border-radius:2px;
+  }
+
+  /* Architecture diagram block */
+  .arch{
+    border:1px solid var(--line-2);background:var(--bg-1);padding:28px;margin:32px 0;
+    font-family:var(--mono);font-size:13px;color:var(--ink-2);line-height:1.9;
+    max-width:720px;position:relative;overflow-x:auto;
+  }
+  .arch::before{
+    content:'ARCHITECTURE';position:absolute;top:-9px;left:14px;background:var(--bg-1);
+    padding:0 10px;font-size:9px;letter-spacing:0.2em;color:var(--ink-3);
+  }
+  .arch .layer{display:flex;gap:14px;align-items:flex-start;padding:6px 0}
+  .arch .layer .num{color:var(--ink-3);flex-shrink:0;width:28px;font-size:11px}
+  .arch .layer .arrow{color:var(--acc);flex-shrink:0;width:18px}
+  .arch .layer b{color:var(--ink);font-weight:500}
+  .arch .layer em{color:var(--acc-cool);font-style:normal;font-size:12px;margin-left:6px}
+
+  /* Service list */
+  .services{
+    display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);
+    border:1px solid var(--line);margin:28px 0;max-width:720px;
+  }
+  @media(max-width:780px){.services{grid-template-columns:1fr}}
+  .svc-item{background:var(--bg);padding:18px 20px}
+  .svc-item-name{font-family:var(--mono);font-size:12px;color:var(--ink);letter-spacing:0.05em;margin-bottom:6px}
+  .svc-item-calls{font-family:var(--mono);font-size:11px;color:var(--ink-3);line-height:1.6}
+  .svc-item-calls code{background:none;border:none;padding:0;color:var(--acc-cool);font-size:11px}
+
+  /* Control mapping table */
+  .control-table{margin:28px 0;max-width:720px;border:1px solid var(--line)}
+  .control-row{
+    display:grid;grid-template-columns:120px 1fr;gap:20px;padding:18px 22px;
+    border-bottom:1px solid var(--line);align-items:start;
+  }
+  .control-row:last-child{border-bottom:none}
+  .control-row .ctrl{
+    font-family:var(--mono);font-size:12px;color:var(--acc);font-weight:500;letter-spacing:0.05em;
+  }
+  .control-row .desc{font-size:14px;line-height:1.55;color:var(--ink-2)}
+  .control-row .desc b{color:var(--ink);font-weight:400}
+  .control-row .desc code{font-size:12px}
+
+  /* Scoring blocks */
+  .score-block{
+    border:1px solid var(--line-2);background:var(--bg-1);padding:32px;margin:24px 0;
+    max-width:720px;
+  }
+  .score-block h3{margin-top:0}
+  .score-block .range{
+    display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);
+    border:1px solid var(--line);margin:20px 0;
+  }
+  @media(max-width:780px){.score-block .range{grid-template-columns:1fr}}
+  .range-cell{background:var(--bg);padding:16px 18px;text-align:center}
+  .range-cell .n{font-family:var(--display);font-size:26px;font-weight:300;letter-spacing:-0.015em}
+  .range-cell .n.green{color:var(--acc)}
+  .range-cell .n.amber{color:var(--acc-warm)}
+  .range-cell .n.red{color:var(--acc-red)}
+  .range-cell .l{font-family:var(--mono);font-size:10px;color:var(--ink-3);letter-spacing:0.1em;text-transform:uppercase;margin-top:6px}
+
+  .deductions{
+    display:flex;gap:12px;flex-wrap:wrap;margin:16px 0;font-family:var(--mono);font-size:12px;
+  }
+  .deductions span{padding:6px 12px;border:1px solid var(--line-2);background:var(--bg)}
+  .deductions span.crit{color:var(--acc-red);border-color:rgba(255,106,85,0.3)}
+  .deductions span.high{color:var(--acc-warm);border-color:rgba(232,192,122,0.3)}
+  .deductions span.med{color:var(--ink-2)}
+
+  /* Honesty callout */
+  .honesty{
+    border:1px solid rgba(191,255,90,0.3);background:linear-gradient(180deg, rgba(191,255,90,0.03), transparent);
+    padding:40px 44px;margin:40px 0 0;position:relative;
+  }
+  @media(max-width:780px){.honesty{padding:30px 24px}}
+  .honesty-label{
+    font-family:var(--mono);font-size:10px;letter-spacing:0.25em;text-transform:uppercase;color:var(--acc);
+    margin-bottom:18px;
+  }
+  .honesty h2{margin-bottom:18px!important}
+  .honesty p{color:var(--ink-2);font-size:16px}
+  .honesty ul{list-style:none;margin:24px 0;max-width:none}
+  .honesty ul li{
+    padding:14px 0 14px 28px;border-bottom:1px dashed var(--line);
+    font-size:15px;line-height:1.65;color:var(--ink-2);position:relative;
+  }
+  .honesty ul li::before{
+    content:'×';position:absolute;left:0;color:var(--acc-red);font-family:var(--mono);font-size:15px;top:14px;
+  }
+  .honesty ul li:last-child{border-bottom:none}
+  .honesty ul li strong{color:var(--ink);font-weight:400}
+  .honesty-sig{
+    font-family:var(--display);font-style:italic;font-size:18px;color:var(--ink-2);
+    margin-top:24px;padding-top:20px;border-top:1px solid var(--line);
+  }
+
+  /* Contact strip */
+  .contact-strip{
+    border-top:1px solid var(--line);margin-top:72px;padding-top:44px;
+    display:flex;justify-content:space-between;align-items:center;gap:24px;flex-wrap:wrap;
+  }
+  .contact-strip .l{font-family:var(--display);font-size:22px;font-weight:300;font-style:italic;color:var(--ink-2)}
+  .contact-strip .l b{color:var(--ink);font-weight:400;font-style:normal}
+  .btn{
+    font-family:var(--mono);font-size:12px;letter-spacing:0.04em;padding:14px 22px;
+    border:1px solid var(--line-2);transition:all .3s;display:inline-flex;align-items:center;gap:10px;
+    text-transform:uppercase;
+  }
+  .btn-primary{background:var(--acc);color:#000;border-color:var(--acc);font-weight:500}
+  .btn-primary:hover{background:#d4ff7a;transform:translateY(-1px)}
+
+  /* FOOTER */
+  footer{
+    border-top:1px solid var(--line);padding:40px 32px;
+    display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;
+    color:var(--ink-3);letter-spacing:0.1em;text-transform:uppercase;flex-wrap:wrap;gap:16px;
+    max-width:1400px;margin:0 auto;
+  }
+  @media(max-width:780px){footer{padding:30px 18px}}
+  footer a{transition:color .2s}
+  footer a:hover{color:var(--ink)}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <a href="/" class="brand">
+    <div class="brand-mark">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <rect x="3" y="3" width="18" height="18" stroke="var(--acc)"/>
+        <rect x="7" y="7" width="10" height="10" stroke="var(--ink)"/>
+        <line x1="3" y1="12" x2="7" y2="12" stroke="var(--acc)"/>
+        <line x1="17" y1="12" x2="21" y2="12" stroke="var(--acc)"/>
+        <line x1="12" y1="3" x2="12" y2="7" stroke="var(--acc)"/>
+        <line x1="12" y1="17" x2="12" y2="21" stroke="var(--acc)"/>
+      </svg>
+    </div>
+    LoxeAI
+    <span class="brand-tag">Methodology</span>
+  </a>
+  <a href="/" class="nav-back">← Back to site</a>
+</nav>
+
+<header class="page-header">
+  <div class="eyebrow">— Methodology · how it actually works</div>
+  <h1>No <em>black box.</em><br>No <span class="accent">vapor.</span></h1>
+  <p class="page-lede">
+    How the Evidence Tracer is built, end to end. What we call, what we infer, what we store, and — at the bottom — what we're <em>not</em> yet claiming. Read the whole thing before you trust us with anything.
+  </p>
+  <div class="updated">
+    <span><b>Pilot version:</b> EVT v0.4</span>
+    <span><b>Last updated:</b> April 23, 2026</span>
+  </div>
+</header>
+
+<div class="content">
+
+  <aside class="sidebar">
+    <a href="#architecture">01 — Architecture</a>
+    <a href="#collection">02 — Collection</a>
+    <a href="#mapping">03 — Control mapping</a>
+    <a href="#reasoning">04 — Reasoning layer</a>
+    <a href="#scoring">05 — Scoring</a>
+    <a href="#traceability">06 — Traceability</a>
+    <a href="#honesty">07 — Honesty note</a>
+  </aside>
+
+  <article class="article">
+
+    <section id="architecture">
+      <h2>01 — <em>Architecture</em></h2>
+      <p>
+        Evidence Tracer runs as a <strong>stateless Cloudflare Worker</strong> at Cloudflare's edge — TypeScript compiled to a single bundled script. There are no persistent VMs, no Kubernetes, no polling daemons sitting inside your cloud. Scan state and evidence are persisted to <strong>Cloudflare D1</strong> (edge SQLite) for the duration of the 30-day retention window, then deleted.
+      </p>
+      <div class="arch">
+        <div class="layer"><span class="num">01</span><span class="arrow">→</span><span><b>Customer</b> POSTs IAM Role ARN + ExternalId to the Worker</span></div>
+        <div class="layer"><span class="num">02</span><span class="arrow">→</span><span><b>Worker</b> calls <em>STS AssumeRole</em> for short-lived session credentials</span></div>
+        <div class="layer"><span class="num">03</span><span class="arrow">→</span><span><b>Scan</b> fans out across AWS services using <em>SigV4</em>-signed requests</span></div>
+        <div class="layer"><span class="num">04</span><span class="arrow">→</span><span><b>Evidence</b> items chunked &amp; staged in <em>D1</em> per scan</span></div>
+        <div class="layer"><span class="num">05</span><span class="arrow">→</span><span><b>Claude</b> (Sonnet 4.5) runs per-control analysis against structured prompts</span></div>
+        <div class="layer"><span class="num">06</span><span class="arrow">→</span><span><b>Report</b> assembled from control results, returned as HTML or JSON</span></div>
+        <div class="layer"><span class="num">07</span><span class="arrow">→</span><span><b>Delete</b> all evidence data 30 days after report delivery</span></div>
+      </div>
+      <p>
+        No long-lived AWS credentials. No write permissions. No installation in your account beyond the read-only IAM role you provision via CloudFormation.
+      </p>
+    </section>
+
+    <section id="collection">
+      <h2>02 — <em>Collection</em></h2>
+      <p>
+        The agent makes direct AWS API calls using <strong>AWS Signature Version 4</strong> hand-rolled signing — no heavy SDK dependencies, minimal surface area. Each service is called in parallel where possible, serialized where AWS requires it (for example, paginating IAM principals before querying their MFA devices).
+      </p>
+      <div class="services">
+        <div class="svc-item">
+          <div class="svc-item-name">IAM</div>
+          <div class="svc-item-calls"><code>GetAccountSummary</code><br><code>ListUsers</code><br><code>ListMFADevices</code><br><code>GenerateCredentialReport</code></div>
+        </div>
+        <div class="svc-item">
+          <div class="svc-item-name">S3</div>
+          <div class="svc-item-calls"><code>ListBuckets</code><br><code>GetBucketEncryption</code><br><code>GetBucketPolicy</code><br><code>GetPublicAccessBlock</code></div>
+        </div>
+        <div class="svc-item">
+          <div class="svc-item-name">CloudTrail</div>
+          <div class="svc-item-calls"><code>DescribeTrails</code><br><code>GetTrailStatus</code><br><code>GetEventSelectors</code></div>
+        </div>
+        <div class="svc-item">
+          <div class="svc-item-name">AWS Config</div>
+          <div class="svc-item-calls"><code>DescribeConfigRules</code><br><code>GetComplianceSummary</code><br><code>DescribeConfigurationRecorders</code></div>
+        </div>
+        <div class="svc-item">
+          <div class="svc-item-name">EC2</div>
+          <div class="svc-item-calls"><code>DescribeVolumes</code><br><code>DescribeSecurityGroups</code><br><code>DescribeInstances</code></div>
+        </div>
+        <div class="svc-item">
+          <div class="svc-item-name">CloudWatch</div>
+          <div class="svc-item-calls"><code>DescribeAlarms</code><br><code>ListMetrics</code><br><code>DescribeLogGroups</code></div>
+        </div>
+      </div>
+      <p>
+        Coverage extends to <strong>KMS, Lambda, RDS, and SNS</strong> for specific control dependencies. Raw API responses — XML or JSON — are truncated where necessary for context-window efficiency, then chunked into D1 as discrete evidence items with their source endpoint, timestamp, and a content hash.
+      </p>
+    </section>
+
+    <section id="mapping">
+      <h2>03 — <em>Control mapping</em></h2>
+      <p>
+        Each SOC 2 Type I control is mapped deterministically — not learned, not inferred — to the specific AWS services and API response fields it depends on. This is proprietary schema work, and it's the thing that gets sharper with every pilot.
+      </p>
+      <div class="control-table">
+        <div class="control-row">
+          <span class="ctrl">CC6.1</span>
+          <span class="desc"><b>Logical access controls.</b> Sources: <code>iam:GetAccountSummary</code>, <code>iam:ListUsers</code>, MFA device enumeration, KMS key rotation status.</span>
+        </div>
+        <div class="control-row">
+          <span class="ctrl">CC6.3</span>
+          <span class="desc"><b>Role-based access.</b> Sources: <code>iam:ListRoles</code>, policy attachment graph, service-role scoping evidence.</span>
+        </div>
+        <div class="control-row">
+          <span class="ctrl">CC6.6</span>
+          <span class="desc"><b>Encryption at rest.</b> Sources: <code>s3:GetBucketEncryption</code>, <code>ec2:DescribeVolumes</code>, <code>rds:DescribeDBInstances</code> encryption status.</span>
+        </div>
+        <div class="control-row">
+          <span class="ctrl">CC6.7</span>
+          <span class="desc"><b>Transmission & disposal.</b> Sources: EBS volume encryption state, bucket-level public access blocks, TLS configuration evidence.</span>
+        </div>
+        <div class="control-row">
+          <span class="ctrl">CC7.1</span>
+          <span class="desc"><b>Baseline configuration.</b> Sources: <code>config:DescribeConfigRules</code>, compliance summary, configuration recorder status.</span>
+        </div>
+        <div class="control-row">
+          <span class="ctrl">CC7.2</span>
+          <span class="desc"><b>System monitoring.</b> Sources: <code>cloudtrail:DescribeTrails</code>, multi-region flag, log-file validation, event selectors.</span>
+        </div>
+        <div class="control-row">
+          <span class="ctrl">CC7.3</span>
+          <span class="desc"><b>Anomaly detection.</b> Sources: <code>cloudwatch:DescribeAlarms</code>, critical alarm coverage, log-group retention.</span>
+        </div>
+        <div class="control-row">
+          <span class="ctrl">CC8.1</span>
+          <span class="desc"><b>Change management.</b> Sources: CloudTrail management events, Config rule evaluation history, IaC evidence where present.</span>
+        </div>
+      </div>
+      <p>
+        Because the mapping is deterministic, every gap finding traces directly back to a specific API call and response field. There is no "the AI decided" — there is "this API call returned <code>Encrypted: false</code>, here it is."
+      </p>
+    </section>
+
+    <section id="reasoning">
+      <h2>04 — <em>The reasoning layer</em></h2>
+      <p>
+        Raw AWS evidence is structured and passed to <strong>Claude Sonnet 4.5</strong> (Anthropic's production reasoning model) with a per-control analysis prompt. Claude is not making the compliance decision from scratch — it's interpreting structured evidence against an explicit prompt contract that specifies the control requirements, severity weighting, and output schema. It returns structured JSON: gap findings, severity labels, and proposed remediation.
+      </p>
+      <p>
+        We use Claude because the interpretive work — distinguishing a technically-present-but-misconfigured password policy from a genuinely compliant one, recognizing when a CloudTrail trail exists but has a delivery gap — is brittle with pure pattern matching. Claude handles ambiguity that rule engines can't, and the structured output contract keeps its responses inside predictable bounds.
+      </p>
+      <p>
+        Every finding Claude returns is anchored to the source evidence item in D1, which means every claim in the final report is reproducible: the auditor can see the exact API response Claude reasoned over.
+      </p>
+    </section>
+
+    <section id="scoring">
+      <h2>05 — <em>Scoring</em></h2>
+
+      <div class="score-block">
+        <h3>Gap Score (0–100)</h3>
+        <p style="margin-bottom:8px">
+          Percentage of assessed control checkpoints meeting SOC 2 best-practice thresholds for each criterion. Checkpoints are weighted by audit-risk severity, applied to a baseline of 100.
+        </p>
+        <div class="deductions">
+          <span class="crit">CRITICAL −25</span>
+          <span class="high">HIGH −15</span>
+          <span class="med">MEDIUM −5</span>
+        </div>
+        <div class="range">
+          <div class="range-cell"><div class="n green">80+</div><div class="l">Low audit risk</div></div>
+          <div class="range-cell"><div class="n amber">60–80</div><div class="l">Moderate · likely findings</div></div>
+          <div class="range-cell"><div class="n red">&lt;60</div><div class="l">High · remediate first</div></div>
+        </div>
+        <p style="margin:0">
+          A score above 80 indicates low audit risk for that control; 60–80 indicates moderate risk with likely auditor findings; below 60 indicates high audit risk that should be remediated before engaging an auditor.
+        </p>
+      </div>
+
+      <div class="score-block">
+        <h3>Freshness Score (0–100)</h3>
+        <p style="margin-bottom:8px">
+          Measures recency of security configurations against SOC 2 time-based thresholds. Scored independently from Gap Score — a control can be fully configured but use stale credentials, or actively monitored but misconfigured.
+        </p>
+        <p style="margin-bottom:8px"><strong>Inputs:</strong></p>
+        <ul style="list-style:none;margin:0 0 16px;max-width:none">
+          <li style="padding:8px 0 8px 24px;position:relative;font-size:15px;color:var(--ink-2);line-height:1.55">
+            <span style="position:absolute;left:0;color:var(--acc);font-family:var(--mono)">—</span>
+            <strong style="color:var(--ink);font-weight:400">IAM access key age</strong> relative to the 90-day rotation threshold
+          </li>
+          <li style="padding:8px 0 8px 24px;position:relative;font-size:15px;color:var(--ink-2);line-height:1.55">
+            <span style="position:absolute;left:0;color:var(--acc);font-family:var(--mono)">—</span>
+            <strong style="color:var(--ink);font-weight:400">Credential last-used dates</strong> for stale-account detection
+          </li>
+          <li style="padding:8px 0 8px 24px;position:relative;font-size:15px;color:var(--ink-2);line-height:1.55">
+            <span style="position:absolute;left:0;color:var(--acc);font-family:var(--mono)">—</span>
+            <strong style="color:var(--ink);font-weight:400">CloudTrail log delivery recency</strong>
+          </li>
+          <li style="padding:8px 0 8px 24px;position:relative;font-size:15px;color:var(--ink-2);line-height:1.55">
+            <span style="position:absolute;left:0;color:var(--acc);font-family:var(--mono)">—</span>
+            <strong style="color:var(--ink);font-weight:400">AWS Config rule last-evaluation timestamps</strong>
+          </li>
+        </ul>
+        <p style="margin:0">
+          A score below 70 indicates configurations that auditors commonly flag for access-key management and monitoring gaps.
+        </p>
+      </div>
+    </section>
+
+    <section id="traceability">
+      <h2>06 — <em>Traceability</em></h2>
+      <p>
+        The whole point of the system. Every finding in the final report is anchored to:
+      </p>
+      <ul style="list-style:none;margin:20px 0;max-width:720px">
+        <li style="padding:12px 0 12px 24px;border-bottom:1px dashed var(--line);font-size:15px;line-height:1.6;color:var(--ink-2);position:relative">
+          <span style="position:absolute;left:0;color:var(--acc);font-family:var(--mono)">—</span>
+          The <strong style="color:var(--ink);font-weight:400">exact AWS API endpoint</strong> called (e.g. <code>iam.amazonaws.com/GetAccountSummary</code>)
+        </li>
+        <li style="padding:12px 0 12px 24px;border-bottom:1px dashed var(--line);font-size:15px;line-height:1.6;color:var(--ink-2);position:relative">
+          <span style="position:absolute;left:0;color:var(--acc);font-family:var(--mono)">—</span>
+          The <strong style="color:var(--ink);font-weight:400">request timestamp</strong> in ISO 8601 UTC
+        </li>
+        <li style="padding:12px 0 12px 24px;border-bottom:1px dashed var(--line);font-size:15px;line-height:1.6;color:var(--ink-2);position:relative">
+          <span style="position:absolute;left:0;color:var(--acc);font-family:var(--mono)">—</span>
+          The <strong style="color:var(--ink);font-weight:400">raw response body</strong> (truncated but preserved)
+        </li>
+        <li style="padding:12px 0 12px 24px;border-bottom:1px dashed var(--line);font-size:15px;line-height:1.6;color:var(--ink-2);position:relative">
+          <span style="position:absolute;left:0;color:var(--acc);font-family:var(--mono)">—</span>
+          A <strong style="color:var(--ink);font-weight:400">SHA-256 hash</strong> of the evidence item for tamper-evidence
+        </li>
+        <li style="padding:12px 0 12px 24px;font-size:15px;line-height:1.6;color:var(--ink-2);position:relative">
+          <span style="position:absolute;left:0;color:var(--acc);font-family:var(--mono)">—</span>
+          The <strong style="color:var(--ink);font-weight:400">AWS region</strong> the call was issued against
+        </li>
+      </ul>
+      <p>
+        Your auditor can take any finding from the report and re-run the exact API call themselves, from their own machine, with their own credentials. If the AWS response at their end doesn't match ours within a reasonable drift window, something's wrong — and they'll see it immediately. That's what verifiable means.
+      </p>
+    </section>
+
+    <section id="honesty" class="honesty">
+      <div class="honesty-label">— An honesty note</div>
+      <h2>What we're <em>not</em> yet <span class="accent">claiming.</span></h2>
+      <p>
+        The compliance-software category is noisy. Everyone claims 99% accuracy, trained-on-millions-of-audits, proprietary ML, the lot. Some of it is real; most of it is marketing. We'd rather tell you what we don't have than pretend.
+      </p>
+      <ul>
+        <li><strong>No trained ML model.</strong> There is no proprietary transformer, no graph neural network, no anomaly detector trained on 10,000 audit cycles. The reasoning layer is Claude — a third-party model we send structured prompts to. That's more honest and, frankly, more accurate than anything a small team could train today.</li>
+        <li><strong>No published accuracy number.</strong> We've seen "94% accurate" on competitor sites. Without a benchmark dataset and published methodology, that number means nothing. We'll publish one when we have pilots audited by independent firms who can validate it.</li>
+        <li><strong>No zero-persistence claim.</strong> We store evidence in Cloudflare D1 during the 30-day retention window. "Zero data retention" on a compliance tool is usually cosmetic — the reports have to come from somewhere. We keep what's necessary; we delete it on schedule.</li>
+        <li><strong>Not a Type II continuous-monitoring tool yet.</strong> EVT today is a point-in-time Type I scan. Continuous monitoring and Type II coverage are on the roadmap, not shipped.</li>
+      </ul>
+      <p class="honesty-sig">
+        We'd rather earn the bigger claim than make it.
+      </p>
+    </section>
+
+    <div class="contact-strip">
+      <div class="l">Pressure-test the methodology. <b>Talk to the founder.</b></div>
+      <a href="https://calendar.app.google/YuFNRmSYWtcpHaZ87" target="_blank" rel="noopener" class="btn btn-primary">Book a call →</a>
+    </div>
+
+  </article>
+</div>
+
+<footer>
+  <span>© 2026 LoxeAI · Boston, MA</span>
+  <div style="display:flex;gap:24px;flex-wrap:wrap">
+    <a href="/">Home</a>
+    <a href="methodology.html">Methodology</a>
+    <a href="privacy.html">Privacy</a>
+    <a href="/#contact">Contact</a>
+  </div>
+</footer>
+
+<script>
+  const sections = document.querySelectorAll('.article section');
+  const links = document.querySelectorAll('.sidebar a');
+  const io = new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{
+      if(e.isIntersecting){
+        const id = e.target.id;
+        links.forEach(l=>l.classList.toggle('active', l.getAttribute('href')==='#'+id));
+      }
+    });
+  },{rootMargin:'-30% 0px -60% 0px'});
+  sections.forEach(s=>io.observe(s));
+</script>
+
+</body>
+</html>

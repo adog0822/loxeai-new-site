@@ -1,0 +1,1504 @@
+!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>LoxeAI — Trust Infrastructure for AWS-native companies</title>
+<meta name="description" content="The autonomous trust layer for modern cloud companies. Every finding traceable to the AWS API call that sourced it. Transparent. Traceable. Timestamped." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,200;0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,200;1,9..144,300;1,9..144,400&family=JetBrains+Mono:wght@300;400;500&family=Inter+Tight:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0c0d;
+    --bg-1:#0e1112;
+    --bg-2:#13171a;
+    --bg-deep:#06080a;
+    --line:#1a1f23;
+    --line-2:#262d33;
+    --ink:#ece9e0;
+    --ink-2:#9ea59f;
+    --ink-3:#5e6661;
+    --ink-4:#363c40;
+    --acc:#bfff5a;
+    --acc-warm:#e8c07a;
+    --acc-red:#ff6a55;
+    --acc-cool:#7ab9ff;
+    --display:'Fraunces', serif;
+    --mono:'JetBrains Mono', ui-monospace, monospace;
+    --sans:'Inter Tight', system-ui, sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--bg);color:var(--ink);font-family:var(--sans);font-weight:300;
+    -webkit-font-smoothing:antialiased;overflow-x:hidden;
+    background-image:
+      radial-gradient(ellipse at 20% 0%, rgba(191,255,90,0.035), transparent 50%),
+      radial-gradient(ellipse at 85% 80%, rgba(122,185,255,0.025), transparent 50%);
+  }
+  body::before{
+    content:'';position:fixed;inset:0;pointer-events:none;z-index:1000;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/><feColorMatrix values='0 0 0 0 0.92 0 0 0 0 0.9 0 0 0 0 0.85 0 0 0 0.4 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/></svg>");
+    opacity:.06;mix-blend-mode:overlay;
+  }
+  ::selection{background:var(--acc);color:#000}
+  a{color:inherit;text-decoration:none}
+  button{font-family:inherit;cursor:pointer;background:none;border:none;color:inherit}
+  img,video,iframe{max-width:100%;display:block}
+
+  .glow{
+    position:fixed;width:600px;height:600px;border-radius:50%;
+    background:radial-gradient(circle, rgba(191,255,90,0.06), transparent 60%);
+    pointer-events:none;z-index:0;
+    transform:translate(-50%,-50%);transition:opacity .6s;
+    mix-blend-mode:screen;will-change:transform;
+  }
+
+  .rail{position:fixed;top:0;right:18px;bottom:0;width:1px;z-index:90;pointer-events:none}
+  .rail::before{content:'';position:absolute;inset:0;background:var(--line)}
+  .rail-fill{position:absolute;top:0;left:0;width:1px;background:var(--acc);transform-origin:top;transform:scaleY(0);transition:transform .1s}
+  @media(max-width:780px){.rail{display:none}}
+
+  /* Section markers — editorial magazine style numbers down the left */
+  .marker{
+    position:absolute;left:-8px;top:180px;z-index:2;
+    font-family:var(--mono);font-size:10px;letter-spacing:0.3em;color:var(--ink-3);
+    text-transform:uppercase;writing-mode:vertical-rl;transform:rotate(180deg);
+  }
+  .marker b{color:var(--ink);font-weight:500}
+  @media(max-width:1100px){.marker{display:none}}
+
+  /* ───── REVEAL ───── */
+  .reveal{opacity:0;transform:translateY(24px);transition:opacity 1.1s cubic-bezier(.2,.7,.2,1), transform 1.1s cubic-bezier(.2,.7,.2,1)}
+  .reveal.in{opacity:1;transform:translateY(0)}
+  .reveal-stagger > *{opacity:0;transform:translateY(16px);transition:opacity .9s cubic-bezier(.2,.7,.2,1), transform .9s cubic-bezier(.2,.7,.2,1)}
+  .reveal-stagger.in > *{opacity:1;transform:translateY(0)}
+  .reveal-stagger.in > *:nth-child(1){transition-delay:0s}
+  .reveal-stagger.in > *:nth-child(2){transition-delay:.08s}
+  .reveal-stagger.in > *:nth-child(3){transition-delay:.16s}
+  .reveal-stagger.in > *:nth-child(4){transition-delay:.24s}
+  .reveal-stagger.in > *:nth-child(5){transition-delay:.32s}
+  .reveal-stagger.in > *:nth-child(6){transition-delay:.4s}
+
+  /* ───── NAV ───── */
+  .nav{
+    position:fixed;top:0;left:0;right:0;z-index:100;
+    display:flex;align-items:center;justify-content:space-between;
+    padding:18px 32px;
+    backdrop-filter:blur(14px);
+    background:rgba(10,12,13,0.55);
+    border-bottom:1px solid var(--line);
+  }
+  .brand{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-size:13px;letter-spacing:0.02em;font-weight:500}
+  .brand-mark{width:22px;height:22px}
+  .brand-mark svg{width:100%;height:100%;display:block}
+  .brand-tag{color:var(--ink-3);font-size:10px;letter-spacing:0.2em;text-transform:uppercase;border-left:1px solid var(--line-2);padding-left:10px;margin-left:4px}
+  .nav-links{display:flex;gap:28px;font-family:var(--mono);font-size:12px;color:var(--ink-2)}
+  .nav-links a{transition:color .25s}
+  .nav-links a:hover{color:var(--ink)}
+  .nav-cta{
+    font-family:var(--mono);font-size:12px;padding:8px 14px;border:1px solid var(--line-2);
+    transition:all .25s;display:flex;align-items:center;gap:8px;
+  }
+  .nav-cta:hover{border-color:var(--acc);color:var(--acc)}
+  .nav-cta::before{content:'';width:6px;height:6px;background:var(--acc);border-radius:50%;box-shadow:0 0 8px var(--acc);animation:pulse 2s infinite}
+  @keyframes pulse{50%{opacity:.4}}
+  @media (max-width:780px){.nav-links{display:none}.nav{padding:14px 18px}}
+
+  /* ───── HERO — asymmetric ───── */
+  .hero{
+    min-height:100vh;padding:160px 32px 100px;position:relative;
+    max-width:1400px;margin:0 auto;
+    display:grid;grid-template-columns:1.1fr 1fr;gap:80px;align-items:center;
+  }
+  .hero .marker{top:220px}
+  @media(max-width:1080px){.hero{grid-template-columns:1fr;gap:50px;padding:130px 18px 70px;min-height:auto}}
+
+  .hero-eyebrow{
+    display:inline-flex;align-items:center;gap:10px;
+    font-family:var(--mono);font-size:11px;letter-spacing:0.18em;text-transform:uppercase;
+    color:var(--ink-2);border:1px solid var(--line-2);padding:7px 14px;border-radius:999px;
+    margin-bottom:36px;
+  }
+  .hero-eyebrow .dot{width:5px;height:5px;background:var(--acc);border-radius:50%;box-shadow:0 0 6px var(--acc)}
+
+  h1.hero-title{
+    font-family:var(--display);font-weight:200;
+    font-size:clamp(48px,7.2vw,112px);line-height:0.96;letter-spacing:-0.02em;
+    margin-bottom:36px;word-spacing:0.02em;
+  }
+  h1.hero-title em{font-style:italic;color:var(--ink-2);font-weight:200;margin-right:0.06em}
+  h1.hero-title .accent{color:var(--acc);font-style:normal;font-weight:300}
+  /* Off-grid accent word — breaks the axis with spacing, not overlap */
+  h1.hero-title .offset{display:inline-block}
+
+  .hero-sub{font-size:19px;line-height:1.55;color:var(--ink-2);max-width:540px;margin-bottom:44px;font-weight:300}
+  .hero-sub strong{color:var(--ink);font-weight:400}
+
+  .hero-actions{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:56px}
+  .btn{
+    font-family:var(--mono);font-size:13px;letter-spacing:0.04em;padding:15px 24px;
+    border:1px solid var(--line-2);transition:all .3s;display:inline-flex;align-items:center;gap:10px;
+    text-transform:uppercase;position:relative;overflow:hidden;
+  }
+  .btn-primary{background:var(--acc);color:#000;border-color:var(--acc);font-weight:500}
+  .btn-primary:hover{background:#d4ff7a;transform:translateY(-1px);box-shadow:0 8px 30px rgba(191,255,90,0.25)}
+  .btn-ghost{color:var(--ink)}
+  .btn-ghost:hover{border-color:var(--ink);background:rgba(255,255,255,0.02)}
+  .btn .arrow{transition:transform .25s}
+  .btn:hover .arrow{transform:translateX(4px)}
+
+  .hero-stamps{
+    display:flex;gap:32px;font-family:var(--mono);font-size:11px;color:var(--ink-3);
+    border-top:1px solid var(--line);padding-top:24px;flex-wrap:wrap;
+  }
+  .hero-stamps span{display:flex;align-items:center;gap:6px}
+  .hero-stamps .num{color:var(--ink);font-weight:500}
+
+  /* Hero terminal — shifted slightly for asymmetry */
+  .terminal{
+    background:var(--bg-1);border:1px solid var(--line-2);
+    box-shadow:0 40px 100px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.02) inset, 0 0 80px rgba(191,255,90,0.04);
+    font-family:var(--mono);font-size:12px;position:relative;overflow:hidden;
+    transform:translateY(-20px);
+  }
+  .terminal::before{
+    content:'';position:absolute;inset:0;background:
+      repeating-linear-gradient(0deg, transparent 0, transparent 2px, rgba(255,255,255,0.012) 2px, rgba(255,255,255,0.012) 3px);
+    pointer-events:none;z-index:2;
+  }
+  .term-header{
+    display:flex;align-items:center;justify-content:space-between;padding:10px 14px;
+    border-bottom:1px solid var(--line);background:var(--bg-2);position:relative;z-index:3;
+  }
+  .term-header .lights{display:flex;gap:6px}
+  .term-header .lights span{width:9px;height:9px;border-radius:50%;background:var(--line-2)}
+  .term-title{color:var(--ink-3);font-size:10px;letter-spacing:0.15em;text-transform:uppercase}
+  .term-status{display:flex;align-items:center;gap:6px;color:var(--acc);font-size:10px;letter-spacing:0.1em;text-transform:uppercase}
+  .term-status .pulse{width:6px;height:6px;background:var(--acc);border-radius:50%;animation:pulse 1.5s infinite;box-shadow:0 0 6px var(--acc)}
+  .term-body{padding:18px;height:440px;overflow:hidden;position:relative;z-index:1}
+  .term-line{display:flex;gap:12px;padding:3px 0;align-items:flex-start;font-size:11.5px;opacity:0;animation:lineIn .4s forwards}
+  .term-line .ts{color:var(--ink-3);flex-shrink:0;width:78px}
+  .term-line .lbl{flex-shrink:0;width:50px;text-transform:uppercase;letter-spacing:0.05em;font-size:10px;padding-top:1px}
+  .term-line .lbl.scan{color:var(--acc-cool)}
+  .term-line .lbl.pass{color:var(--acc)}
+  .term-line .lbl.warn{color:var(--acc-warm)}
+  .term-line .lbl.fail{color:var(--acc-red)}
+  .term-line .lbl.hash{color:var(--ink-3)}
+  .term-line .lbl.seal{color:var(--acc);font-weight:500}
+  .term-line .msg{color:var(--ink-2);flex:1;word-break:break-all;line-height:1.5}
+  .term-line .msg b{color:var(--ink);font-weight:500}
+  .term-line .msg code{color:var(--acc-cool);font-size:11px}
+  @keyframes lineIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+  .term-footer{
+    border-top:1px solid var(--line);padding:10px 14px;display:flex;justify-content:space-between;
+    background:var(--bg-2);font-size:10px;color:var(--ink-3);letter-spacing:0.08em;text-transform:uppercase;
+    position:relative;z-index:3;
+  }
+
+  /* ───── SECTIONS ───── */
+  section{padding:140px 32px;max-width:1400px;margin:0 auto;position:relative}
+  @media(max-width:780px){section{padding:90px 18px}}
+
+  .sec-label{
+    font-family:var(--mono);font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-3);
+    display:flex;align-items:center;gap:14px;margin-bottom:28px;
+  }
+  .sec-label::before{content:'';width:36px;height:1px;background:var(--ink-3)}
+
+  h2.sec-title{
+    font-family:var(--display);font-weight:200;
+    font-size:clamp(40px,5.6vw,80px);line-height:1.02;letter-spacing:-0.018em;
+    margin-bottom:28px;max-width:1000px;word-spacing:0.02em;
+  }
+  h2.sec-title em{font-style:italic;color:var(--ink-2);font-weight:200;margin:0 0.04em}
+  h2.sec-title .accent{color:var(--acc);font-style:normal;font-weight:300}
+  h2.sec-title .offset{display:inline-block}
+
+  .sec-lede{font-size:18px;line-height:1.6;color:var(--ink-2);max-width:680px;margin-bottom:64px;font-weight:300}
+
+  /* ───── PROBLEM — asymmetric layout ───── */
+  .problem-section{position:relative}
+  .problem-header{
+    display:grid;grid-template-columns:1fr 1.2fr;gap:60px;align-items:end;margin-bottom:80px;
+  }
+  @media(max-width:980px){.problem-header{grid-template-columns:1fr;gap:24px}}
+  .problem-header .left{padding-bottom:8px}
+  .problem-header .right{font-size:17px;line-height:1.6;color:var(--ink-2);max-width:520px;font-weight:300;padding-left:40px;border-left:1px solid var(--line-2)}
+  @media(max-width:980px){.problem-header .right{padding-left:0;border-left:none;padding-top:8px;border-top:1px solid var(--line-2)}}
+
+  /* Asymmetric stat cards */
+  .problem-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:24px;position:relative}
+  @media(max-width:980px){.problem-stats{grid-template-columns:1fr;gap:14px}}
+  .pstat{
+    padding:40px 32px;border:1px solid var(--line);background:var(--bg);
+    position:relative;overflow:hidden;
+    transition:background .4s;
+  }
+  .pstat:nth-child(1){transform:translateY(0px)}
+  .pstat:nth-child(2){transform:translateY(40px);border-color:var(--line-2)}
+  .pstat:nth-child(3){transform:translateY(-20px)}
+  @media(max-width:980px){.pstat{transform:none!important}}
+  .pstat:hover{background:var(--bg-1)}
+  .pstat::after{
+    content:'';position:absolute;top:0;left:0;width:100%;height:1px;
+    background:linear-gradient(90deg, transparent, var(--acc), transparent);
+    transform:translateX(-100%);transition:transform .8s ease;
+  }
+  .pstat:hover::after{transform:translateX(100%)}
+  .pstat-num{font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-spacing:0.2em;margin-bottom:20px;text-transform:uppercase}
+  .pstat-num b{color:var(--acc);font-weight:500}
+  .pstat-val{font-family:var(--display);font-size:64px;font-weight:200;line-height:0.95;margin-bottom:18px;letter-spacing:-0.03em}
+  .pstat-val .unit{font-size:18px;color:var(--ink-2);font-style:italic;margin-left:4px;font-weight:300;letter-spacing:normal}
+  .pstat-text{font-size:14px;line-height:1.55;color:var(--ink-2);font-weight:300}
+
+  /* ───── BREATH ───── */
+  .breath{
+    padding:200px 32px;text-align:left;max-width:1200px;margin:0 auto;position:relative;
+  }
+  @media(max-width:780px){.breath{padding:140px 18px}}
+  .breath::before{
+    content:'';position:absolute;left:48px;top:0;width:1px;height:80px;
+    background:linear-gradient(to bottom, transparent, var(--ink-4));
+  }
+  .breath-mark{
+    font-family:var(--mono);font-size:11px;letter-spacing:0.3em;color:var(--acc);
+    text-transform:uppercase;margin-bottom:56px;padding-left:72px;
+  }
+  .breath-text{
+    font-family:var(--display);font-weight:200;font-style:italic;
+    font-size:clamp(40px,6.2vw,88px);line-height:1.08;letter-spacing:-0.015em;
+    color:var(--ink);max-width:1100px;word-spacing:0.02em;
+  }
+  .breath-text .accent{color:var(--acc);font-style:normal;font-weight:300}
+  .breath-text .quiet{color:var(--ink-3)}
+  .breath-attrib{
+    font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-spacing:0.15em;text-transform:uppercase;
+    margin-top:56px;padding-left:72px;
+  }
+
+  /* ═══════════════════════════════════════════════ */
+  /* ───── INTELLIGENT CHOREOGRAPHY CENTERPIECE ──── */
+  /* ═══════════════════════════════════════════════ */
+  .collapse-section{
+    padding:0;max-width:none;margin:0;
+    background:linear-gradient(180deg, transparent 0%, var(--bg-deep) 15%, var(--bg-deep) 85%, transparent 100%);
+  }
+  .collapse-stage{
+    height:650vh;position:relative; /* 6.5x viewport = longer, more breathing room */
+  }
+  .collapse-sticky{
+    position:sticky;top:0;height:100vh;width:100%;
+    display:flex;align-items:center;justify-content:center;overflow:hidden;
+  }
+  .collapse-canvas{position:relative;width:100%;height:100%}
+
+  /* Phase indicator — top left, editorial */
+  .phase-indicator{
+    position:absolute;top:10%;left:6%;z-index:20;
+    font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-spacing:0.3em;text-transform:uppercase;
+    display:flex;flex-direction:column;gap:8px;
+  }
+  @media(max-width:780px){.phase-indicator{top:7%;left:5%;font-size:10px}}
+  .phase-indicator .chapter{color:var(--acc)}
+  .phase-dots{display:flex;gap:6px;margin-top:4px}
+  .phase-dot{width:18px;height:1px;background:var(--ink-4);transition:background .5s}
+  .phase-dot.active{background:var(--acc)}
+  .phase-dot.done{background:var(--ink-2)}
+
+  /* Main narrative caption — bottom, editorial typography */
+  .narrative{
+    position:absolute;bottom:12%;left:6%;right:6%;z-index:20;
+    max-width:880px;pointer-events:none;
+  }
+  @media(max-width:780px){.narrative{bottom:8%;left:5%;right:5%}}
+  .narrative-line{
+    font-family:var(--display);font-weight:200;font-style:italic;
+    font-size:clamp(22px,3vw,42px);line-height:1.15;letter-spacing:-0.02em;color:var(--ink);
+    opacity:0;transition:opacity .6s ease, transform .6s ease;transform:translateY(8px);
+  }
+  .narrative-line.show{opacity:1;transform:translateY(0)}
+  .narrative-line em{color:var(--ink-3);font-style:italic}
+  .narrative-line .accent{color:var(--acc);font-style:normal;font-weight:300}
+  .narrative-line .ink{color:var(--ink);font-style:normal;font-weight:300}
+
+  .narrative-sub{
+    font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-spacing:0.15em;text-transform:uppercase;
+    margin-top:18px;opacity:0;transition:opacity .6s ease;
+  }
+  .narrative-sub.show{opacity:1}
+
+  /* Chaos fragments */
+  .fragment{
+    position:absolute;
+    background:var(--bg-1);border:1px solid var(--line-2);
+    font-family:var(--mono);font-size:10px;color:var(--ink-2);
+    padding:8px 12px;white-space:nowrap;
+    box-shadow:0 8px 24px rgba(0,0,0,0.4);
+    will-change:transform,opacity;pointer-events:none;
+    left:50%;top:50%;
+  }
+  .fragment .ts{color:var(--ink-3);margin-right:8px;font-size:9px}
+  .fragment .tag{margin-right:6px;font-size:9px;letter-spacing:0.1em;text-transform:uppercase;font-weight:500}
+  .fragment .tag.iam{color:var(--acc-cool)}
+  .fragment .tag.s3{color:var(--acc-warm)}
+  .fragment .tag.ec2{color:#c29bff}
+  .fragment .tag.trail{color:#7fdfc2}
+  .fragment .tag.kms{color:#ff9ec7}
+  .fragment .tag.cw{color:var(--acc)}
+
+  /* Category labels — appear during sorting phase */
+  .category-label{
+    position:absolute;font-family:var(--mono);font-size:10px;letter-spacing:0.2em;
+    text-transform:uppercase;color:var(--ink-3);opacity:0;transition:opacity .8s;
+    padding:4px 10px;border:1px solid var(--line);background:rgba(10,12,13,0.6);
+    pointer-events:none;z-index:15;
+  }
+  .category-label.show{opacity:1}
+  .category-label b{color:var(--ink);font-weight:500;margin-right:6px}
+
+  /* The final sealed card */
+  .calm-card{
+    position:absolute;left:50%;top:50%;
+    transform:translate(-50%,-50%) scale(0.88);
+    width:min(640px, 88vw);
+    background:var(--bg-1);border:1px solid var(--line-2);
+    box-shadow:0 40px 100px rgba(0,0,0,0.7), 0 0 120px rgba(191,255,90,0.12), 0 0 0 1px rgba(255,255,255,0.02) inset;
+    font-family:var(--mono);opacity:0;
+    transition:opacity .8s ease, transform 1s cubic-bezier(.2,.7,.2,1);
+    will-change:transform,opacity;z-index:10;
+  }
+  .calm-card.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
+
+  .calm-head{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:14px 18px;border-bottom:1px solid var(--line);background:var(--bg-2);
+  }
+  .calm-head .seal{display:flex;align-items:center;gap:8px;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--acc)}
+  .calm-head .seal::before{content:'';width:6px;height:6px;background:var(--acc);border-radius:50%;box-shadow:0 0 10px var(--acc);animation:pulse 2s infinite}
+  .calm-head .stamp{font-size:10px;color:var(--ink-3);letter-spacing:0.05em}
+  .calm-body{padding:28px}
+  .calm-h{font-family:var(--display);font-style:italic;font-weight:300;font-size:24px;color:var(--ink);margin-bottom:6px;letter-spacing:-0.01em}
+  .calm-sub{font-size:11px;color:var(--ink-3);letter-spacing:0.05em;margin-bottom:24px}
+  .calm-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line);margin-bottom:18px}
+  .calm-stat{background:var(--bg-1);padding:16px;text-align:center}
+  .calm-stat .n{font-family:var(--display);font-size:28px;font-weight:300;color:var(--ink)}
+  .calm-stat .n.green{color:var(--acc)}
+  .calm-stat .n.amber{color:var(--acc-warm)}
+  .calm-stat .n.red{color:var(--acc-red)}
+  .calm-stat .l{font-size:9px;color:var(--ink-3);letter-spacing:0.1em;text-transform:uppercase;margin-top:4px}
+  .calm-hash{
+    background:var(--bg);padding:14px 16px;border:1px solid var(--line);
+    font-size:10px;color:var(--ink-3);word-break:break-all;line-height:1.7;
+  }
+  .calm-hash .k{color:var(--ink-2);text-transform:uppercase;letter-spacing:0.08em;font-size:9px;display:inline-block;width:72px}
+  .calm-hash .v{color:var(--acc-cool)}
+  .calm-hash .v.g{color:var(--acc)}
+  .calm-hash .row{display:flex;align-items:baseline;gap:8px}
+  .calm-hash .row+.row{margin-top:4px}
+
+  /* ───── DEMO VIDEO SECTION — asymmetric ───── */
+  #demo{padding:140px 32px;max-width:1400px;margin:0 auto}
+  .demo-layout{
+    display:grid;grid-template-columns:1fr 2.2fr;gap:56px;align-items:end;margin-bottom:56px;
+  }
+  @media(max-width:980px){.demo-layout{grid-template-columns:1fr;gap:28px;align-items:start}}
+
+  .demo-frame{
+    border:1px solid var(--line-2);background:var(--bg-1);
+    box-shadow:0 40px 100px rgba(0,0,0,0.5), 0 0 60px rgba(191,255,90,0.05);
+    overflow:hidden;position:relative;
+  }
+  .demo-frame-head{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:12px 16px;background:var(--bg-2);border-bottom:1px solid var(--line);
+  }
+  .demo-frame-lights{display:flex;gap:6px}
+  .demo-frame-lights span{width:9px;height:9px;border-radius:50%;background:var(--line-2)}
+  .demo-frame-title{font-family:var(--mono);font-size:10px;letter-spacing:0.15em;color:var(--ink-3);text-transform:uppercase}
+  .demo-frame-meta{font-family:var(--mono);font-size:10px;color:var(--acc);letter-spacing:0.1em;display:flex;align-items:center;gap:6px}
+  .demo-frame-meta::before{content:'';width:6px;height:6px;background:var(--acc);border-radius:50%;box-shadow:0 0 8px var(--acc);animation:pulse 1.5s infinite}
+  .demo-video{aspect-ratio:16/10;background:#000;position:relative}
+  .demo-video iframe{width:100%;height:100%;border:0;display:block}
+
+  /* Three notes — staggered heights for asymmetry */
+  .demo-notes{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line)}
+  @media(max-width:780px){.demo-notes{grid-template-columns:1fr}}
+  .demo-note{background:var(--bg);padding:24px}
+  .demo-note-l{font-family:var(--mono);font-size:10px;color:var(--acc);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:12px}
+  .demo-note-h{font-family:var(--display);font-size:22px;font-weight:300;color:var(--ink);margin-bottom:8px;font-style:italic;letter-spacing:-0.01em}
+  .demo-note-t{font-size:13px;color:var(--ink-2);line-height:1.55}
+
+  /* ───── CONTRAST — asymmetric, overlapping ───── */
+  .contrast-wrap{position:relative;margin-top:48px}
+  .contrast{display:grid;grid-template-columns:1fr 1.1fr;gap:32px;align-items:start}
+  @media(max-width:780px){.contrast{grid-template-columns:1fr;gap:24px}}
+  .contrast-col{padding:52px 44px;position:relative;border:1px solid var(--line)}
+  .contrast-col.them{
+    background:var(--bg);
+    transform:translateY(40px);
+  }
+  .contrast-col.us{
+    background:var(--bg-1);
+    border-color:var(--line-2);
+    box-shadow:0 30px 80px rgba(0,0,0,0.4), 0 0 60px rgba(191,255,90,0.03);
+  }
+  @media(max-width:780px){.contrast-col.them{transform:none}}
+  .contrast-tag{font-family:var(--mono);font-size:10px;letter-spacing:0.2em;text-transform:uppercase;margin-bottom:24px}
+  .contrast-col.them .contrast-tag{color:var(--ink-3)}
+  .contrast-col.us .contrast-tag{color:var(--acc)}
+  .contrast-h{font-family:var(--display);font-size:32px;font-weight:300;line-height:1.1;letter-spacing:-0.015em;margin-bottom:28px}
+  .contrast-col.them .contrast-h{color:var(--ink-2);font-style:italic}
+  .contrast-list{list-style:none;display:flex;flex-direction:column;gap:14px}
+  .contrast-list li{display:flex;gap:12px;font-size:14px;line-height:1.5;color:var(--ink-2);padding-bottom:14px;border-bottom:1px dashed var(--line)}
+  .contrast-list li:last-child{border-bottom:none}
+  .contrast-list li::before{font-family:var(--mono);font-size:11px;flex-shrink:0;width:14px}
+  .contrast-col.them .contrast-list li::before{content:'×';color:var(--ink-3)}
+  .contrast-col.us .contrast-list li::before{content:'→';color:var(--acc)}
+  .contrast-col.us .contrast-list li{color:var(--ink)}
+  /* Overlap decoration between the two columns */
+  .contrast-divider{
+    position:absolute;left:50%;top:0;transform:translateX(-50%);
+    width:1px;height:100%;background:linear-gradient(to bottom, transparent, var(--line-2) 20%, var(--line-2) 80%, transparent);
+    display:none;
+  }
+  @media(min-width:781px){.contrast-divider{display:block}}
+
+  /* ───── HOW — staggered rhythm ───── */
+  .steps{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+  @media(max-width:980px){.steps{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:520px){.steps{grid-template-columns:1fr}}
+  .step{
+    background:var(--bg-1);padding:32px 28px;position:relative;min-height:260px;
+    display:flex;flex-direction:column;transition:background .3s;border:1px solid var(--line);
+  }
+  .step:nth-child(1){transform:translateY(0)}
+  .step:nth-child(2){transform:translateY(24px)}
+  .step:nth-child(3){transform:translateY(-12px)}
+  .step:nth-child(4){transform:translateY(36px)}
+  @media(max-width:980px){.step{transform:none!important}}
+  .step:hover{background:var(--bg-2)}
+  .step-num{font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-spacing:0.15em;margin-bottom:32px}
+  .step-num b{color:var(--acc);font-weight:500;margin-right:6px}
+  .step-icon{width:36px;height:36px;margin-bottom:22px;color:var(--ink)}
+  .step-h{font-family:var(--display);font-size:22px;font-weight:400;line-height:1.15;letter-spacing:-0.01em;margin-bottom:12px;font-style:italic}
+  .step-t{font-size:13px;line-height:1.55;color:var(--ink-2);margin-top:auto}
+  .step-time{font-family:var(--mono);font-size:10px;color:var(--acc);letter-spacing:0.1em;margin-top:14px;text-transform:uppercase}
+
+  /* ───── COVERAGE ───── */
+  .coverage{border:1px solid var(--line);padding:44px;background:var(--bg-1);position:relative}
+  .coverage-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:32px;flex-wrap:wrap;gap:16px}
+  .coverage-h{font-family:var(--display);font-size:24px;font-weight:400;letter-spacing:-0.01em;font-style:italic}
+  .coverage-meta{font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-spacing:0.1em;text-transform:uppercase}
+  .coverage-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--line)}
+  @media(max-width:780px){.coverage-grid{grid-template-columns:repeat(2,1fr)}}
+  .svc{background:var(--bg-1);padding:20px;text-align:center;transition:all .25s;cursor:default}
+  .svc:hover{background:var(--bg-2)}
+  .svc-name{font-family:var(--mono);font-size:12px;color:var(--ink);letter-spacing:0.05em;margin-bottom:6px}
+  .svc-desc{font-size:10px;color:var(--ink-3);letter-spacing:0.05em;text-transform:uppercase}
+
+  /* ───── PRICING — asymmetric ───── */
+  .pricing{display:grid;grid-template-columns:1.15fr 1fr 1fr;gap:16px}
+  @media(max-width:780px){.pricing{grid-template-columns:1fr;gap:12px}}
+  .price-cell{
+    background:var(--bg);padding:40px 32px;display:flex;flex-direction:column;
+    position:relative;transition:background .3s;border:1px solid var(--line);
+  }
+  .price-cell:hover{background:var(--bg-1)}
+  .price-cell.featured{
+    background:var(--bg-1);border-color:var(--line-2);border-top:2px solid var(--acc);
+    transform:translateY(-16px);
+    box-shadow:0 30px 80px rgba(0,0,0,0.4), 0 0 60px rgba(191,255,90,0.04);
+  }
+  .price-cell:nth-child(2){transform:translateY(16px)}
+  .price-cell:nth-child(3){transform:translateY(-4px)}
+  @media(max-width:780px){.price-cell{transform:none!important}.price-cell.featured{transform:none!important}}
+  .price-cell.featured::before{
+    content:'PILOT 01 · DESIGN PARTNER';position:absolute;top:-2px;left:-1px;
+    background:var(--acc);color:#000;font-family:var(--mono);font-size:9px;font-weight:500;letter-spacing:0.15em;padding:5px 11px;
+  }
+  .price-stage{font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-spacing:0.15em;margin-bottom:18px;text-transform:uppercase}
+  .price-amount{font-family:var(--display);font-size:64px;font-weight:200;line-height:1;letter-spacing:-0.03em;margin-bottom:10px}
+  .price-amount .currency{font-size:28px;color:var(--ink-2);vertical-align:top;margin-right:2px;font-weight:300}
+  .price-amount .free{color:var(--acc);font-style:italic;font-weight:300}
+  .price-period{font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-spacing:0.05em;margin-bottom:28px;text-transform:uppercase}
+  .price-h{font-family:var(--display);font-size:20px;font-weight:400;margin-bottom:10px;font-style:italic;color:var(--ink)}
+  .price-t{font-size:13px;line-height:1.55;color:var(--ink-2);margin-bottom:auto;padding-bottom:20px}
+  .price-tag{font-family:var(--mono);font-size:10px;color:var(--acc);letter-spacing:0.15em;text-transform:uppercase}
+
+  .roadmap-note{
+    margin-top:48px;border:1px dashed var(--line-2);padding:24px 28px;
+    display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap;
+    background:rgba(255,255,255,0.01);
+  }
+  .roadmap-note .l{display:flex;flex-direction:column;gap:6px}
+  .roadmap-note .label{font-family:var(--mono);font-size:10px;color:var(--ink-3);letter-spacing:0.2em;text-transform:uppercase}
+  .roadmap-note .text{font-family:var(--display);font-size:20px;font-weight:300;color:var(--ink-2);font-style:italic}
+  .roadmap-note .text b{color:var(--ink);font-weight:400;font-style:normal;font-family:var(--display)}
+  .roadmap-note .pill{font-family:var(--mono);font-size:10px;color:var(--acc);letter-spacing:0.15em;text-transform:uppercase;border:1px solid var(--line-2);padding:6px 12px}
+
+  /* ───── AUDITORS ───── */
+  .auditors{
+    border:1px solid var(--line);background:var(--bg-1);padding:64px 52px;
+    display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center;
+    position:relative;overflow:hidden;
+  }
+  @media(max-width:780px){.auditors{grid-template-columns:1fr;padding:44px 26px;gap:40px}}
+  .auditors::before{
+    content:'';position:absolute;top:0;right:0;width:400px;height:400px;
+    background:radial-gradient(circle, rgba(191,255,90,0.08), transparent 70%);
+    pointer-events:none;
+  }
+  .auditors-eyebrow{font-family:var(--mono);font-size:11px;color:var(--acc);letter-spacing:0.2em;text-transform:uppercase;margin-bottom:20px}
+  .auditors-h{font-family:var(--display);font-size:44px;font-weight:200;line-height:1.05;letter-spacing:-0.015em;margin-bottom:22px;word-spacing:0.02em}
+  .auditors-h em{font-style:italic;color:var(--ink-2);margin:0 0.04em}
+  .auditors-t{font-size:15px;line-height:1.6;color:var(--ink-2);margin-bottom:32px}
+  .auditors-form{display:flex;flex-direction:column;gap:12px;position:relative;z-index:2}
+  .auditors-input,
+  textarea.auditors-input{
+    background:var(--bg)!important;
+    border:1px solid var(--line-2);
+    padding:15px 16px;
+    font-family:var(--mono);font-size:13px;
+    color:var(--ink)!important;
+    transition:border-color .25s;
+    -webkit-text-fill-color:var(--ink)!important;
+    appearance:none;-webkit-appearance:none;
+    border-radius:0;
+  }
+  .auditors-input:focus{outline:none;border-color:var(--acc)}
+  .auditors-input::placeholder{color:var(--ink-3);opacity:1}
+  /* Kill Chrome's white autofill override */
+  .auditors-input:-webkit-autofill,
+  .auditors-input:-webkit-autofill:hover,
+  .auditors-input:-webkit-autofill:focus,
+  .auditors-input:-webkit-autofill:active{
+    -webkit-box-shadow:0 0 0 1000px var(--bg) inset!important;
+    -webkit-text-fill-color:var(--ink)!important;
+    caret-color:var(--ink);
+    transition:background-color 9999s ease-out, color 9999s ease-out;
+  }
+  .auditors-row{display:flex;gap:12px}
+  .auditors-row .auditors-input{flex:1}
+
+  /* ───── FINAL CTA ───── */
+  .final-cta{text-align:left;padding:200px 32px 140px;border-top:1px solid var(--line);position:relative;max-width:1400px;margin:0 auto}
+  .final-cta::before{
+    content:'';position:absolute;top:0;left:72px;
+    width:1px;height:100px;background:linear-gradient(to bottom, var(--acc), transparent);
+  }
+  .final-stamp{font-family:var(--mono);font-size:11px;color:var(--acc);letter-spacing:0.3em;margin-bottom:36px;text-transform:uppercase;padding-left:96px}
+  .final-h{
+    font-family:var(--display);font-weight:200;
+    font-size:clamp(50px,8vw,128px);line-height:0.98;letter-spacing:-0.025em;margin-bottom:44px;
+    max-width:1200px;word-spacing:0.02em;
+  }
+  .final-h em{font-style:italic;color:var(--ink-2);margin:0 0.04em}
+  .final-h .accent{color:var(--acc);font-style:normal;font-weight:300}
+  .final-sub{font-size:18px;color:var(--ink-2);max-width:560px;margin-bottom:48px;line-height:1.55;padding-left:96px}
+  .final-actions{display:flex;gap:14px;flex-wrap:wrap;padding-left:96px}
+  @media(max-width:780px){
+    .final-cta{padding:140px 18px 90px}
+    .final-stamp,.final-sub,.final-actions{padding-left:0}
+    .final-cta::before{left:0}
+  }
+
+  /* ───── FOOTER ───── */
+  footer{
+    border-top:1px solid var(--line);padding:56px 32px 32px;
+    display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;gap:40px;
+    max-width:1400px;margin:0 auto;
+  }
+  @media(max-width:780px){footer{grid-template-columns:1fr 1fr;padding:36px 18px}}
+  .foot-brand{font-family:var(--display);font-size:26px;font-weight:300;letter-spacing:-0.01em;margin-bottom:14px}
+  .foot-brand em{font-style:italic;color:var(--ink-2)}
+  .foot-tag{font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-spacing:0.1em;text-transform:uppercase;line-height:1.6}
+  .foot-col h4{font-family:var(--mono);font-size:10px;color:var(--ink-3);letter-spacing:0.2em;text-transform:uppercase;margin-bottom:14px;font-weight:400}
+  .foot-col a{display:block;font-size:13px;color:var(--ink-2);padding:5px 0;transition:color .2s}
+  .foot-col a:hover{color:var(--ink)}
+  .foot-bottom{
+    grid-column:1/-1;border-top:1px solid var(--line);margin-top:28px;padding-top:24px;
+    display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;color:var(--ink-3);letter-spacing:0.1em;text-transform:uppercase;flex-wrap:wrap;gap:12px;
+  }
+</style>
+</head>
+<body>
+
+<div class="glow" id="glow"></div>
+<div class="rail"><div class="rail-fill" id="railFill"></div></div>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="brand">
+    <div class="brand-mark">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <rect x="3" y="3" width="18" height="18" stroke="var(--acc)"/>
+        <rect x="7" y="7" width="10" height="10" stroke="var(--ink)"/>
+        <line x1="3" y1="12" x2="7" y2="12" stroke="var(--acc)"/>
+        <line x1="17" y1="12" x2="21" y2="12" stroke="var(--acc)"/>
+        <line x1="12" y1="3" x2="12" y2="7" stroke="var(--acc)"/>
+        <line x1="12" y1="17" x2="12" y2="21" stroke="var(--acc)"/>
+      </svg>
+    </div>
+    LoxeAI
+    <span class="brand-tag">EVT · v0.4</span>
+  </div>
+  <div class="nav-links">
+    <a href="#collapse">Trace</a>
+    <a href="#demo">Demo</a>
+    <a href="#how">Process</a>
+    <a href="#pricing">Pricing</a>
+    <a href="#auditors">Auditors</a>
+  </div>
+  <a href="https://calendar.app.google/YuFNRmSYWtcpHaZ87" target="_blank" rel="noopener" class="nav-cta">Request Pilot</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <span class="marker">Chapter · <b>One</b></span>
+  <div class="reveal-stagger">
+    <div class="hero-eyebrow"><span class="dot"></span>The trust layer for AWS-native companies</div>
+    <h1 class="hero-title">
+      Evidence you can <em>actually</em><br><span class="accent offset">verify.</span>
+    </h1>
+    <p class="hero-sub">
+      Compliance tools collect evidence. Auditors can't verify it. We trace every finding to the exact AWS API call that sourced it — <strong>timestamped, hashed, independently reproducible.</strong>
+    </p>
+    <div class="hero-actions">
+      <a href="https://calendar.app.google/YuFNRmSYWtcpHaZ87" target="_blank" rel="noopener" class="btn btn-primary">Request a pilot <span class="arrow">→</span></a>
+      <a href="#demo" class="btn btn-ghost">Watch it run</a>
+    </div>
+    <div class="hero-stamps">
+      <span><span class="num">10+</span> AWS services</span>
+      <span><span class="num">8</span> SOC 2 controls</span>
+      <span><span class="num">~5 min</span> end-to-end</span>
+    </div>
+  </div>
+
+  <div class="terminal reveal">
+    <div class="term-header">
+      <div class="lights"><span></span><span></span><span></span></div>
+      <div class="term-title">evt::scan/aws-prod-us-east-1</div>
+      <div class="term-status"><span class="pulse"></span>Live</div>
+    </div>
+    <div class="term-body" id="termBody"></div>
+    <div class="term-footer">
+      <span>Region: us-east-1</span>
+      <span id="termCount">0 events</span>
+      <span>SHA-256 verified</span>
+    </div>
+  </div>
+</section>
+
+<!-- PROBLEM — asymmetric header, staggered stat cards -->
+<section class="problem-section">
+  <span class="marker">Chapter · <b>Two</b></span>
+  <div class="reveal">
+    <div class="sec-label">02 — The category is broken</div>
+    <div class="problem-header">
+      <div class="left">
+        <h2 class="sec-title">
+          Audits don't fail from <em>missing</em> evidence.<br>
+          They fail from <span class="accent offset">unverifiable</span> evidence.
+        </h2>
+      </div>
+      <div class="right">
+        Today's platforms produce black-box outputs. Auditors can't see how the data was generated, so they ask again. And again. Weeks of back-and-forth become months. Deals slip. Budgets bleed.
+      </div>
+    </div>
+  </div>
+
+  <div class="problem-stats reveal-stagger">
+    <div class="pstat">
+      <div class="pstat-num"><b>— 01</b>&nbsp;&nbsp;Incumbent spend</div>
+      <div class="pstat-val" data-count="75" data-prefix="$" data-suffix="K"><span class="unit">/yr</span></div>
+      <div class="pstat-text">Spent on tools that produce evidence auditors still re-verify by hand. Relief sold; relief not delivered.</div>
+    </div>
+    <div class="pstat">
+      <div class="pstat-num"><b>— 02</b>&nbsp;&nbsp;Manual cost</div>
+      <div class="pstat-val" data-count="60"><span class="unit"> hours</span></div>
+      <div class="pstat-text">Of manual evidence collection per audit cycle. Stale by the time it's submitted — and the system changed yesterday.</div>
+    </div>
+    <div class="pstat">
+      <div class="pstat-num"><b>— 03</b>&nbsp;&nbsp;Trust debt</div>
+      <div class="pstat-val">Weeks<span class="unit"> of back-and-forth</span></div>
+      <div class="pstat-text">Between auditor and engineering, because no one can reproduce how the evidence was generated. Deals slip here.</div>
+    </div>
+  </div>
+</section>
+
+<!-- BREATH — left-aligned, asymmetric -->
+<div class="breath reveal">
+  <div class="breath-mark">— A different way</div>
+  <p class="breath-text">
+    What if your evidence<br><span class="quiet">didn't need to be</span> <span class="accent">defended?</span>
+  </p>
+  <div class="breath-attrib">— The thesis</div>
+</div>
+
+<!-- ═══════════════════ COLLAPSE — intelligent choreography ═══════════════════ -->
+<section id="collapse" class="collapse-section">
+  <div class="collapse-stage" id="collapseStage">
+    <div class="collapse-sticky">
+      <div class="collapse-canvas" id="collapseCanvas">
+
+        <!-- Phase indicator -->
+        <div class="phase-indicator">
+          <span class="chapter">Chapter · Three</span>
+          <span id="phaseName">Intake</span>
+          <div class="phase-dots">
+            <span class="phase-dot" data-p="0"></span>
+            <span class="phase-dot" data-p="1"></span>
+            <span class="phase-dot" data-p="2"></span>
+            <span class="phase-dot" data-p="3"></span>
+            <span class="phase-dot" data-p="4"></span>
+          </div>
+        </div>
+
+        <!-- Category labels (fade in during sort phase) -->
+        <div class="category-label" data-cat="0"><b>IAM</b>Identity</div>
+        <div class="category-label" data-cat="1"><b>S3</b>Storage</div>
+        <div class="category-label" data-cat="2"><b>EC2</b>Compute</div>
+        <div class="category-label" data-cat="3"><b>CloudTrail</b>Audit log</div>
+        <div class="category-label" data-cat="4"><b>KMS</b>Keys</div>
+        <div class="category-label" data-cat="5"><b>CloudWatch</b>Alarms</div>
+
+        <!-- Calm card -->
+        <div class="calm-card" id="calmCard">
+          <div class="calm-head">
+            <div class="seal">Evidence Sealed</div>
+            <div class="stamp">2026-04-22T14:32:15Z</div>
+          </div>
+          <div class="calm-body">
+            <div class="calm-h">aws-prod-us-east-1 · evidence package</div>
+            <div class="calm-sub">8 SOC 2 controls · 10 services · 47 traceable artifacts</div>
+            <div class="calm-stats">
+              <div class="calm-stat"><div class="n green">45</div><div class="l">Pass</div></div>
+              <div class="calm-stat"><div class="n amber">1</div><div class="l">Gap</div></div>
+              <div class="calm-stat"><div class="n red">1</div><div class="l">Fail</div></div>
+            </div>
+            <div class="calm-hash">
+              <div class="row"><span class="k">ledger</span><span class="v">sha256:7f4a2e9b1c8d5f3a6e2b9c4d7f1e8a5b…</span></div>
+              <div class="row"><span class="k">signed</span><span class="v">2026-04-22T14:32:15Z</span></div>
+              <div class="row"><span class="k">status</span><span class="v g">independently reproducible</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Narrative caption -->
+        <div class="narrative">
+          <div class="narrative-line" id="narLine">Forty hours of evidence, <em>scattered across forty places.</em></div>
+          <div class="narrative-sub" id="narSub">Scroll to watch it resolve</div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DEMO -->
+<section id="demo">
+  <span class="marker">Chapter · <b>Four</b></span>
+  <div class="reveal">
+    <div class="sec-label">04 — Watch it run</div>
+    <div class="demo-layout">
+      <div>
+        <h2 class="sec-title">
+          A complete scan,<br><span class="accent offset">end to end.</span>
+        </h2>
+      </div>
+      <p class="sec-lede" style="margin-bottom:0">
+        No edits. No demo magic. The agent connects via read-only IAM, scans ten services, maps findings to controls, hashes the ledger, and ships a package your auditor can re-run from their own machine.
+      </p>
+    </div>
+  </div>
+
+  <div class="demo-frame reveal">
+    <div class="demo-frame-head">
+      <div class="demo-frame-lights"><span></span><span></span><span></span></div>
+      <div class="demo-frame-title">loxeai · evidence-tracer-walkthrough.mp4</div>
+      <div class="demo-frame-meta">Recorded</div>
+    </div>
+    <div class="demo-video">
+      <iframe src="https://www.loom.com/embed/74398dc661864a418c76bcba6de54108?hide_owner=true&hide_share=true&hide_title=true" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>
+    </div>
+  </div>
+
+  <div class="demo-notes reveal-stagger" style="margin-top:48px">
+    <div class="demo-note">
+      <div class="demo-note-l">— Watch for</div>
+      <div class="demo-note-h">The connection</div>
+      <div class="demo-note-t">One CloudFormation stack. A read-only role assumed. Zero data leaves your account that you didn't explicitly authorize.</div>
+    </div>
+    <div class="demo-note">
+      <div class="demo-note-l">— Watch for</div>
+      <div class="demo-note-h">The trace</div>
+      <div class="demo-note-t">Every finding clickable. Every finding sourced. The exact AWS API call surfaces beneath the result — receipts, not assertions.</div>
+    </div>
+    <div class="demo-note">
+      <div class="demo-note-l">— Watch for</div>
+      <div class="demo-note-h">The handoff</div>
+      <div class="demo-note-t">A sealed evidence ledger your auditor opens and reproduces in their own terminal. The back-and-forth ends before it starts.</div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTRAST — overlapping asymmetric columns -->
+<section>
+  <span class="marker">Chapter · <b>Five</b></span>
+  <div class="reveal">
+    <div class="sec-label">05 — A different category</div>
+    <h2 class="sec-title">
+      They sell <em>automation.</em><br>
+      We sell <span class="accent offset">verifiability.</span>
+    </h2>
+    <p class="sec-lede">
+      Every incumbent automates the workflow. None of them solve the trust problem at the core. That's the line we're drawing — and it's a wider line than it looks.
+    </p>
+  </div>
+
+  <div class="contrast-wrap reveal">
+    <div class="contrast">
+      <div class="contrast-col them">
+        <div class="contrast-tag">— Incumbents</div>
+        <div class="contrast-h">Black-box automation</div>
+        <ul class="contrast-list">
+          <li>Evidence collected — but how it was generated is hidden</li>
+          <li>Static snapshots that go stale within hours</li>
+          <li>Reports need weeks of follow-up clarification</li>
+          <li>A workflow tool, not a trust artifact</li>
+          <li>$25K–$75K/year for output auditors re-verify anyway</li>
+        </ul>
+      </div>
+      <div class="contrast-col us">
+        <div class="contrast-tag">— LoxeAI Evidence Tracer</div>
+        <div class="contrast-h">Source-traceable trust artifacts</div>
+        <ul class="contrast-list">
+          <li>Every finding links to the exact API call & response</li>
+          <li>Continuous freshness scores — evidence stays alive</li>
+          <li>Your auditor can independently reproduce any finding</li>
+          <li>Trust infrastructure — artifacts that stand on their own</li>
+          <li>Pilot pricing — relief without an enterprise contract</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW — rhythmic staggered steps -->
+<section id="how">
+  <span class="marker">Chapter · <b>Six</b></span>
+  <div class="reveal">
+    <div class="sec-label">06 — How it works</div>
+    <h2 class="sec-title">
+      From IAM role to<br><span class="accent offset">auditor-ready</span> <em>in five minutes.</em>
+    </h2>
+    <p class="sec-lede">
+      Read-only. Zero data exfiltration. Your auditor can re-run every finding from their own terminal. If they can't reproduce it, it's not evidence.
+    </p>
+  </div>
+
+  <div class="steps reveal-stagger">
+    <div class="step">
+      <div class="step-num"><b>01</b>CONNECT</div>
+      <svg class="step-icon" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.2">
+        <rect x="4" y="8" width="24" height="16" rx="1"/>
+        <path d="M4 14h24M10 8v6M22 8v6"/>
+        <circle cx="16" cy="20" r="2" fill="var(--acc)" stroke="none"/>
+      </svg>
+      <h3 class="step-h">Deploy the IAM role</h3>
+      <p class="step-t">One CloudFormation stack. Read-only permissions across IAM, S3, CloudTrail, Config, EC2, CloudWatch, KMS, Lambda, RDS, SNS.</p>
+      <div class="step-time">~ 90 seconds</div>
+    </div>
+    <div class="step">
+      <div class="step-num"><b>02</b>SCAN</div>
+      <svg class="step-icon" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.2">
+        <circle cx="16" cy="16" r="10"/>
+        <path d="M16 6v4M16 22v4M6 16h4M22 16h4" stroke="var(--acc)"/>
+        <circle cx="16" cy="16" r="3" fill="var(--acc)" stroke="none"/>
+      </svg>
+      <h3 class="step-h">Agent runs the scan</h3>
+      <p class="step-t">Calls 10+ services. Captures every request, response, timestamp. Hashes each artifact. Builds the trace ledger.</p>
+      <div class="step-time">~ 3 minutes</div>
+    </div>
+    <div class="step">
+      <div class="step-num"><b>03</b>MAP</div>
+      <svg class="step-icon" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.2">
+        <rect x="4" y="6" width="10" height="6"/>
+        <rect x="18" y="6" width="10" height="6"/>
+        <rect x="4" y="20" width="10" height="6"/>
+        <rect x="18" y="20" width="10" height="6"/>
+        <path d="M14 9h4M14 23h4M9 12v8M23 12v8" stroke="var(--acc)"/>
+      </svg>
+      <h3 class="step-h">Map to controls</h3>
+      <p class="step-t">8 core SOC 2 Type I controls. Every finding gets a gap score, freshness score, and the source API call attached.</p>
+      <div class="step-time">automatic</div>
+    </div>
+    <div class="step">
+      <div class="step-num"><b>04</b>SHIP</div>
+      <svg class="step-icon" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.2">
+        <path d="M6 26V10l10-6 10 6v16"/>
+        <path d="M6 10l10 6 10-6M16 16v10" stroke="var(--acc)"/>
+      </svg>
+      <h3 class="step-h">Hand to your auditor</h3>
+      <p class="step-t">A package they open and verify themselves. No follow-up. No black box. The audit conversation ends before it starts.</p>
+      <div class="step-time">instant</div>
+    </div>
+  </div>
+</section>
+
+<!-- COVERAGE -->
+<section>
+  <div class="coverage reveal">
+    <div class="coverage-head">
+      <h3 class="coverage-h">AWS coverage · 10+ services</h3>
+      <span class="coverage-meta">Read-only · Region-aware</span>
+    </div>
+    <div class="coverage-grid">
+      <div class="svc"><div class="svc-name">IAM</div><div class="svc-desc">Identity</div></div>
+      <div class="svc"><div class="svc-name">S3</div><div class="svc-desc">Storage</div></div>
+      <div class="svc"><div class="svc-name">CloudTrail</div><div class="svc-desc">Audit log</div></div>
+      <div class="svc"><div class="svc-name">Config</div><div class="svc-desc">Posture</div></div>
+      <div class="svc"><div class="svc-name">EC2</div><div class="svc-desc">Compute</div></div>
+      <div class="svc"><div class="svc-name">CloudWatch</div><div class="svc-desc">Alarms</div></div>
+      <div class="svc"><div class="svc-name">KMS</div><div class="svc-desc">Keys</div></div>
+      <div class="svc"><div class="svc-name">Lambda</div><div class="svc-desc">Functions</div></div>
+      <div class="svc"><div class="svc-name">RDS</div><div class="svc-desc">Database</div></div>
+      <div class="svc"><div class="svc-name">SNS</div><div class="svc-desc">Notification</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section id="pricing">
+  <span class="marker">Chapter · <b>Seven</b></span>
+  <div class="reveal">
+    <div class="sec-label">07 — Pricing</div>
+    <h2 class="sec-title">
+      Designed for relief,<br><em>not</em> <span class="accent offset">lock-in.</span>
+    </h2>
+    <p class="sec-lede">
+      No annual contracts up front. Pay per pilot until the value is undeniable. Three tiers. Limited seats. Then continuous monitoring when you're ready.
+    </p>
+  </div>
+
+  <div class="pricing reveal-stagger">
+    <div class="price-cell featured">
+      <div class="price-stage">— Pilot · 01</div>
+      <div class="price-amount"><span class="free">$0</span></div>
+      <div class="price-period">First pilot · design partner</div>
+      <h4 class="price-h">Build it with us</h4>
+      <p class="price-t">Free in exchange for a testimonial, case study, and product feedback. One partner — the one we'll cite for years.</p>
+      <span class="price-tag">— 1 seat only</span>
+    </div>
+    <div class="price-cell">
+      <div class="price-stage">— Pilot · 02</div>
+      <div class="price-amount"><span class="currency">$</span>499</div>
+      <div class="price-period">One-time engagement</div>
+      <h4 class="price-h">Early adopter</h4>
+      <p class="price-t">Full Evidence Tracer scan. Auditor-ready package. Direct line to the founder for any question.</p>
+      <span class="price-tag">— 1 seat</span>
+    </div>
+    <div class="price-cell">
+      <div class="price-stage">— Pilot · 03</div>
+      <div class="price-amount"><span class="currency">$</span>799</div>
+      <div class="price-period">One-time engagement</div>
+      <h4 class="price-h">Standard pilot</h4>
+      <p class="price-t">Same complete output. Locked at this price until we open the continuous monitoring tier.</p>
+      <span class="price-tag">— Limited seats</span>
+    </div>
+  </div>
+
+  <div class="roadmap-note reveal">
+    <div class="l">
+      <span class="label">— On the roadmap</span>
+      <span class="text">Continuous monitoring & <b>SOC 2 Type II</b> — evidence stays fresh, always.</span>
+    </div>
+    <span class="pill">Coming soon</span>
+  </div>
+</section>
+
+<!-- AUDITORS -->
+<section id="auditors">
+  <div class="auditors reveal">
+    <div>
+      <div class="auditors-eyebrow">— For SOC 2 auditors</div>
+      <h2 class="auditors-h">Make the audit <em>stupidly simple.</em></h2>
+      <p class="auditors-t">
+        We don't compete with you. We arm the company before they reach you, so the back-and-forth disappears. Every artifact you receive is reproducible from your own terminal. Want to pressure-test the methodology or join the auditor partner program? Drop your name.
+      </p>
+    </div>
+    <form class="auditors-form" id="auditorForm" action="https://formspree.io/f/xkokpabj" method="POST">
+      <input type="hidden" name="_subject" value="New auditor program signup — LoxeAI" />
+      <input type="hidden" name="form_source" value="auditor_program" />
+      <div class="auditors-row">
+        <input class="auditors-input" type="text" name="name" placeholder="Your name" required />
+        <input class="auditors-input" type="text" name="firm" placeholder="Firm" required />
+      </div>
+      <input class="auditors-input" type="email" name="email" placeholder="Work email" required />
+      <input class="auditors-input" type="text" name="trust_question" placeholder="What would make you trust an evidence package?" />
+      <button type="submit" class="btn btn-primary" style="justify-content:center;margin-top:6px">Join the auditor program <span class="arrow">→</span></button>
+    </form>
+  </div>
+</section>
+
+<!-- FINAL CTA -->
+<section id="cta" class="final-cta">
+  <div class="reveal">
+    <div class="final-stamp">— Now booking pilots</div>
+    <h1 class="final-h">
+      Stop <em>collecting</em><br>
+      evidence.<br>
+      Start <span class="accent offset">proving</span> it.
+    </h1>
+    <p class="final-sub">
+      A 30-minute conversation tells us if you're a fit. If you are, your first evidence package is in your auditor's hands within a week.
+    </p>
+    <div class="final-actions">
+      <a href="https://calendar.app.google/YuFNRmSYWtcpHaZ87" target="_blank" rel="noopener" class="btn btn-primary">Book a call <span class="arrow">→</span></a>
+      <a href="#demo" class="btn btn-ghost">Re-watch the demo</a>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section id="contact">
+  <div class="auditors reveal" style="display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center">
+    <div>
+      <div class="auditors-eyebrow">— Get in touch</div>
+      <h2 class="auditors-h">Questions? <em>Say hi.</em></h2>
+      <p class="auditors-t">
+        Not ready for a pilot but want to talk? Drop a note. Goes straight to the founder's inbox — expect a reply inside 24 hours, usually faster.
+      </p>
+    </div>
+    <form class="auditors-form" id="contactForm" action="https://formspree.io/f/xkokpabj" method="POST">
+      <input type="hidden" name="_subject" value="New contact form message — LoxeAI" />
+      <input type="hidden" name="form_source" value="contact" />
+      <div class="auditors-row">
+        <input class="auditors-input" type="text" name="first_name" placeholder="First name" required />
+        <input class="auditors-input" type="text" name="last_name" placeholder="Last name" required />
+      </div>
+      <input class="auditors-input" type="email" name="email" placeholder="Email" required />
+      <textarea class="auditors-input" name="message" placeholder="What's on your mind?" required rows="4" style="resize:vertical;min-height:110px;font-family:var(--mono);line-height:1.55"></textarea>
+      <button type="submit" class="btn btn-primary" style="justify-content:center;margin-top:6px">Send message <span class="arrow">→</span></button>
+    </form>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div>
+    <div class="foot-brand">Loxe<em>AI</em></div>
+    <div class="foot-tag">Trust infrastructure<br>for AWS-native companies</div>
+  </div>
+  <div class="foot-col">
+    <h4>Product</h4>
+    <a href="#collapse">Evidence Tracer</a>
+    <a href="#demo">Demo</a>
+    <a href="#how">Process</a>
+    <a href="#pricing">Pricing</a>
+  </div>
+  <div class="foot-col">
+    <h4>Company</h4>
+    <a href="#auditors">For auditors</a>
+    <a href="#contact">Contact</a>
+    <a href="https://calendar.app.google/YuFNRmSYWtcpHaZ87" target="_blank" rel="noopener">Request pilot</a>
+  </div>
+  <div class="foot-col">
+    <h4>Trust</h4>
+    <a href="privacy.html">Privacy</a>
+    <a href="methodology.html">Methodology</a>
+  </div>
+  <div class="foot-bottom">
+    <span>© 2026 LoxeAI · Boston, MA</span>
+    <span>Transparent · Traceable · Timestamped</span>
+  </div>
+</footer>
+
+<script>
+/* ───── REVEAL ON SCROLL ───── */
+const io = new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); }
+  });
+},{threshold:0.12, rootMargin:'0px 0px -8% 0px'});
+document.querySelectorAll('.reveal, .reveal-stagger').forEach(el=>io.observe(el));
+
+/* ───── COUNT-UP STATS ───── */
+const counters = document.querySelectorAll('[data-count]');
+const cio = new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{
+    if(!e.isIntersecting) return;
+    const el = e.target;
+    const target = parseInt(el.dataset.count);
+    const prefix = el.dataset.prefix || '';
+    const suffix = el.dataset.suffix || '';
+    const unit = el.querySelector('.unit');
+    const unitHTML = unit ? unit.outerHTML : '';
+    const dur = 1400; const start = performance.now();
+    const tick = (t)=>{
+      const p = Math.min(1,(t-start)/dur);
+      const ease = 1 - Math.pow(1-p, 3);
+      const cur = Math.floor(target * ease);
+      const display = (target>10) ? `${Math.max(target-35,0)}–${cur}` : cur;
+      el.innerHTML = `${prefix}${display}${suffix}${unitHTML}`;
+      if(p<1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+    cio.unobserve(el);
+  });
+},{threshold:0.4});
+counters.forEach(el=>cio.observe(el));
+
+/* ───── CURSOR GLOW ───── */
+const glow = document.getElementById('glow');
+let gx=0,gy=0,tx=0,ty=0;
+document.addEventListener('mousemove', (e)=>{ tx=e.clientX; ty=e.clientY; });
+(function loopGlow(){
+  gx += (tx-gx)*0.08; gy += (ty-gy)*0.08;
+  glow.style.transform = `translate(${gx}px, ${gy}px) translate(-50%,-50%)`;
+  requestAnimationFrame(loopGlow);
+})();
+
+/* ───── SCROLL RAIL ───── */
+const railFill = document.getElementById('railFill');
+function updateRail(){
+  const h = document.documentElement.scrollHeight - window.innerHeight;
+  const p = Math.min(1, Math.max(0, window.scrollY / h));
+  railFill.style.transform = `scaleY(${p})`;
+}
+window.addEventListener('scroll', updateRail, {passive:true});
+updateRail();
+
+/* ───── HERO TERMINAL ───── */
+const termBody = document.getElementById('termBody');
+const termCount = document.getElementById('termCount');
+const lines = [
+  {ts:'14:32:01', lbl:'scan', txt:'connecting to AWS account <b>489201734651</b> via assumed role <code>LoxeEvidenceReader</code>'},
+  {ts:'14:32:02', lbl:'scan', txt:'iam.GetAccountSummary → 200 OK · 124 bytes'},
+  {ts:'14:32:03', lbl:'pass', txt:'<b>CC6.1</b> root account MFA enforced — <code>AccountMFAEnabled=1</code>'},
+  {ts:'14:32:04', lbl:'scan', txt:'iam.ListUsers → 200 OK · 12 principals'},
+  {ts:'14:32:05', lbl:'pass', txt:'<b>CC6.1</b> all human IAM users have MFA · 12/12'},
+  {ts:'14:32:06', lbl:'scan', txt:'cloudtrail.DescribeTrails → 200 OK'},
+  {ts:'14:32:07', lbl:'pass', txt:'<b>CC7.2</b> CloudTrail multi-region · log-file validation ON'},
+  {ts:'14:32:08', lbl:'scan', txt:'s3.ListBuckets + GetBucketEncryption × 14 buckets'},
+  {ts:'14:32:09', lbl:'warn', txt:'<b>CC6.6</b> 1 of 14 buckets without default encryption — <code>artifacts-stage</code>'},
+  {ts:'14:32:10', lbl:'scan', txt:'ec2.DescribeVolumes → 200 OK · 23 volumes'},
+  {ts:'14:32:11', lbl:'fail', txt:'<b>CC6.7</b> 2 unencrypted EBS volumes — <code>vol-0a1b…</code>, <code>vol-0e4f…</code>'},
+  {ts:'14:32:12', lbl:'scan', txt:'kms.ListKeys → 200 OK · 8 customer-managed keys'},
+  {ts:'14:32:13', lbl:'pass', txt:'<b>CC6.1</b> rotation enabled on 8/8 KMS keys'},
+  {ts:'14:32:14', lbl:'hash', txt:'evidence ledger sealed · <code>sha256:7f4a…d7f1e</code> · 47 artifacts'},
+  {ts:'14:32:15', lbl:'seal', txt:'<b>auditor package ready</b> · 45 pass · 1 gap · 1 fail · independently verifiable'},
+];
+let li = 0;
+(function emitLine(){
+  if(li >= lines.length){ setTimeout(()=>{ termBody.innerHTML=''; li=0; emitLine(); }, 4500); return; }
+  const l = lines[li++];
+  const el = document.createElement('div');
+  el.className='term-line';
+  el.innerHTML = `<span class="ts">${l.ts}</span><span class="lbl ${l.lbl}">${l.lbl}</span><span class="msg">${l.txt}</span>`;
+  termBody.appendChild(el);
+  termCount.textContent = `${li} events`;
+  termBody.scrollTop = termBody.scrollHeight;
+  while(termBody.children.length > 14){ termBody.removeChild(termBody.firstChild); }
+  setTimeout(emitLine, 600 + Math.random()*500);
+})();
+
+/* ═══════════════════════════════════════════════════════════════════════ */
+/* ───── INTELLIGENT CHOREOGRAPHY — scroll-linked, frame-accurate ─────── */
+/* ═══════════════════════════════════════════════════════════════════════ */
+
+const stage = document.getElementById('collapseStage');
+const canvas = document.getElementById('collapseCanvas');
+const calmCard = document.getElementById('calmCard');
+const phaseName = document.getElementById('phaseName');
+const narLine = document.getElementById('narLine');
+const narSub = document.getElementById('narSub');
+const phaseDots = document.querySelectorAll('.phase-dot');
+const categoryLabels = document.querySelectorAll('.category-label');
+
+/* Each fragment has: text, category (0-5), and a phase where it's visible */
+const fragmentData = [
+  // IAM (cat 0)
+  {ts:'09:14:02', cat:0, tag:'iam', tagLbl:'IAM', txt:'iam.GetAccountSummary · AccountMFAEnabled=1'},
+  {ts:'09:14:03', cat:0, tag:'iam', tagLbl:'IAM', txt:'iam.ListUsers · 12 principals · MFA 12/12'},
+  {ts:'09:14:04', cat:0, tag:'iam', tagLbl:'IAM', txt:'iam.ListRoles · 24 roles · least-privilege'},
+  {ts:'09:14:05', cat:0, tag:'iam', tagLbl:'IAM', txt:'iam.GenerateCredentialReport · root keys=0'},
+  // S3 (cat 1)
+  {ts:'09:14:06', cat:1, tag:'s3', tagLbl:'S3', txt:'s3.GetBucketEncryption · 13/14 AES256'},
+  {ts:'09:14:07', cat:1, tag:'s3', tagLbl:'S3', txt:'s3.GetBucketPolicy · artifacts-stage GAP'},
+  {ts:'09:14:08', cat:1, tag:'s3', tagLbl:'S3', txt:'s3.GetBucketVersioning · 14/14 enabled'},
+  {ts:'09:14:09', cat:1, tag:'s3', tagLbl:'S3', txt:'s3.GetPublicAccessBlock · all blocked'},
+  // EC2 (cat 2)
+  {ts:'09:14:10', cat:2, tag:'ec2', tagLbl:'EC2', txt:'ec2.DescribeVolumes · 23 volumes · 2 unencrypted'},
+  {ts:'09:14:11', cat:2, tag:'ec2', tagLbl:'EC2', txt:'ec2.DescribeSecurityGroups · 0 wide-open'},
+  {ts:'09:14:12', cat:2, tag:'ec2', tagLbl:'EC2', txt:'ec2.DescribeInstances · 18 running'},
+  // CloudTrail (cat 3)
+  {ts:'09:14:13', cat:3, tag:'trail', tagLbl:'TRAIL', txt:'cloudtrail.DescribeTrails · multi-region ON'},
+  {ts:'09:14:14', cat:3, tag:'trail', tagLbl:'TRAIL', txt:'cloudtrail.GetEventSelectors · all mgmt events'},
+  {ts:'09:14:15', cat:3, tag:'trail', tagLbl:'TRAIL', txt:'cloudtrail.GetTrailStatus · log validation ON'},
+  // KMS (cat 4)
+  {ts:'09:14:16', cat:4, tag:'kms', tagLbl:'KMS', txt:'kms.ListKeys · 8 customer-managed keys'},
+  {ts:'09:14:17', cat:4, tag:'kms', tagLbl:'KMS', txt:'kms.GetKeyRotationStatus · rotation 8/8'},
+  {ts:'09:14:18', cat:4, tag:'kms', tagLbl:'KMS', txt:'kms.GetKeyPolicy · scoped to roles'},
+  // CloudWatch (cat 5)
+  {ts:'09:14:19', cat:5, tag:'cw', tagLbl:'CW', txt:'cloudwatch.DescribeAlarms · 14 alarms OK'},
+  {ts:'09:14:20', cat:5, tag:'cw', tagLbl:'CW', txt:'cloudwatch.ListMetrics · 340 metrics'},
+  {ts:'09:14:21', cat:5, tag:'cw', tagLbl:'CW', txt:'logs.DescribeLogGroups · retention ≥ 90d'},
+];
+
+/* Deterministic PRNG for stable positions */
+function makeRng(seed){let s=seed;return ()=>{s=(s*9301+49297)%233280;return s/233280;}}
+const rng = makeRng(17);
+
+/* Build fragments and compute their positions for each phase */
+const fragments = fragmentData.map((d, i)=>{
+  const el = document.createElement('div');
+  el.className = 'fragment';
+  el.innerHTML = `<span class="ts">${d.ts}</span><span class="tag ${d.tag}">${d.tagLbl}</span>${d.txt}`;
+  canvas.appendChild(el);
+
+  // Phase 1: CHAOS — random scattered
+  const a1 = rng() * Math.PI * 2;
+  const r1 = 220 + rng() * 420;
+  const chaos = { x: Math.cos(a1) * r1, y: Math.sin(a1) * r1 * 0.5, rot: (rng()-0.5)*24, scale:1 };
+
+  // Phase 2: SORTED — grouped by category in 2x3 grid
+  // Categories: 0=IAM, 1=S3, 2=EC2, 3=Trail, 4=KMS, 5=CW
+  const gridCols = 3, gridRows = 2;
+  const cellW = 360, cellH = 220;
+  const catCol = d.cat % gridCols;
+  const catRow = Math.floor(d.cat / gridCols);
+  const gridX = (catCol - 1) * cellW;           // -cellW, 0, +cellW
+  const gridY = (catRow - 0.5) * cellH;         // -cellH/2, +cellH/2
+  // Within a cell, stack fragments vertically with slight offset
+  const catIdx = fragmentData.slice(0,i).filter(x=>x.cat===d.cat).length;
+  const sorted = {
+    x: gridX + (rng()-0.5)*16,
+    y: gridY + catIdx * 26 - (fragmentData.filter(x=>x.cat===d.cat).length * 26)/2 + 12,
+    rot: 0, scale: 0.88
+  };
+
+  // Phase 3: CONDENSED — pull toward center, lose individual identity
+  const a3 = (d.cat / 6) * Math.PI * 2;
+  const condensed = { x: Math.cos(a3) * 120, y: Math.sin(a3) * 70, rot: 0, scale: 0.5 };
+
+  // Phase 4: SEALED — collapse to center, invisible
+  const sealed = { x: 0, y: 0, rot: 0, scale: 0.2 };
+
+  return { el, cat: d.cat, idx: i, chaos, sorted, condensed, sealed, delay: i * 0.012 };
+});
+
+function lerp(a,b,t){return a+(b-a)*t}
+function easeOutCubic(t){return 1-Math.pow(1-t,3)}
+function easeInOutCubic(t){return t<.5 ? 4*t*t*t : 1-Math.pow(-2*t+2,3)/2}
+
+/* Category label positions (match sorted grid) */
+const categoryPositions = [
+  {x: -360, y: -110 - 90}, // IAM
+  {x:    0, y: -110 - 90}, // S3
+  {x:  360, y: -110 - 90}, // EC2
+  {x: -360, y:  110 - 90}, // Trail
+  {x:    0, y:  110 - 90}, // KMS
+  {x:  360, y:  110 - 90}, // CW
+];
+categoryLabels.forEach((lab, i)=>{
+  const p = categoryPositions[i];
+  lab.style.left = '50%';
+  lab.style.top = '50%';
+  lab.style.transform = `translate(-50%, -50%) translate(${p.x}px, ${p.y - 90}px)`;
+});
+
+/* ───── 5 PHASES ─────
+   P1 (0.00–0.18):  Intake       — fragments fade in, chaos scattered
+   P2 (0.18–0.40):  Sort         — fragments travel to category grid
+   P3 (0.40–0.60):  Map          — categories fade, fragments condense toward center
+   P4 (0.60–0.80):  Seal         — condense further; calm card materializes behind
+   P5 (0.80–1.00):  Resolved     — card held; everything else gone
+*/
+const phases = [
+  { name: 'Intake',    narrative: 'Forty hours of evidence, <em>scattered across forty places.</em>', sub:'Every scan, every API call, every timestamp — received.' },
+  { name: 'Classify',  narrative: '<span class="ink">Sorted by service.</span> By control. By surface area.', sub:'IAM · S3 · EC2 · CloudTrail · KMS · CloudWatch' },
+  { name: 'Map',       narrative: 'Mapped to <span class="ink">eight controls</span> — each finding with its receipt.', sub:'Gap score · freshness score · source API call' },
+  { name: 'Seal',      narrative: 'Hashed, timestamped, <span class="ink">signed.</span>', sub:'SHA-256 ledger · 47 artifacts · ready' },
+  { name: 'Resolved',  narrative: 'One ledger. <span class="accent">Reproducible by your auditor.</span>', sub:'The back-and-forth ends here.' },
+];
+
+let lastPhaseIdx = -1;
+let lastNarrative = '';
+
+function updateCollapse(){
+  const rect = stage.getBoundingClientRect();
+  const total = stage.offsetHeight - window.innerHeight;
+  const scrolled = -rect.top;
+  const p = Math.min(1, Math.max(0, scrolled / total));
+
+  // Only update if in visible range (big perf win for long stages)
+  if(p < 0 || p > 1 || rect.bottom < 0 || rect.top > window.innerHeight){
+    return;
+  }
+
+  // Determine current phase
+  let phaseIdx;
+  if(p < 0.18) phaseIdx = 0;
+  else if(p < 0.40) phaseIdx = 1;
+  else if(p < 0.60) phaseIdx = 2;
+  else if(p < 0.80) phaseIdx = 3;
+  else phaseIdx = 4;
+
+  // Update phase indicator
+  if(phaseIdx !== lastPhaseIdx){
+    lastPhaseIdx = phaseIdx;
+    phaseName.textContent = phases[phaseIdx].name;
+    phaseDots.forEach((d, i)=>{
+      d.classList.remove('active','done');
+      if(i < phaseIdx) d.classList.add('done');
+      else if(i === phaseIdx) d.classList.add('active');
+    });
+  }
+
+  // Update narrative with crossfade
+  const nar = phases[phaseIdx].narrative;
+  if(nar !== lastNarrative){
+    lastNarrative = nar;
+    narLine.classList.remove('show');
+    narSub.classList.remove('show');
+    setTimeout(()=>{
+      narLine.innerHTML = nar;
+      narSub.textContent = phases[phaseIdx].sub;
+      narLine.classList.add('show');
+      narSub.classList.add('show');
+    }, 220);
+  } else {
+    narLine.classList.add('show');
+    narSub.classList.add('show');
+  }
+
+  // Interpolate fragment positions between phases
+  fragments.forEach(f => {
+    let pos, opacity;
+    const d = f.delay;
+
+    if(p < 0.02){
+      // Fade in
+      opacity = Math.min(1, (p / 0.02) - d * 3);
+      pos = f.chaos;
+    } else if(p < 0.18){
+      // Chaos
+      opacity = 1;
+      pos = f.chaos;
+    } else if(p < 0.40){
+      // Chaos → Sorted
+      const lp = (p - 0.18) / (0.40 - 0.18);
+      const t = easeInOutCubic(Math.min(1, Math.max(0, lp - d*0.5)));
+      pos = {
+        x: lerp(f.chaos.x, f.sorted.x, t),
+        y: lerp(f.chaos.y, f.sorted.y, t),
+        rot: lerp(f.chaos.rot, f.sorted.rot, t),
+        scale: lerp(f.chaos.scale, f.sorted.scale, t),
+      };
+      opacity = 1;
+    } else if(p < 0.60){
+      // Sorted → Condensed (category label fades out)
+      const lp = (p - 0.40) / (0.60 - 0.40);
+      const t = easeInOutCubic(Math.min(1, Math.max(0, lp - d*0.3)));
+      pos = {
+        x: lerp(f.sorted.x, f.condensed.x, t),
+        y: lerp(f.sorted.y, f.condensed.y, t),
+        rot: lerp(f.sorted.rot, f.condensed.rot, t),
+        scale: lerp(f.sorted.scale, f.condensed.scale, t),
+      };
+      opacity = 1 - t * 0.3;
+    } else if(p < 0.80){
+      // Condensed → Sealed (fragments dissolve as card emerges)
+      const lp = (p - 0.60) / (0.80 - 0.60);
+      const t = easeInOutCubic(Math.min(1, Math.max(0, lp - d*0.2)));
+      pos = {
+        x: lerp(f.condensed.x, f.sealed.x, t),
+        y: lerp(f.condensed.y, f.sealed.y, t),
+        rot: f.condensed.rot,
+        scale: lerp(f.condensed.scale, f.sealed.scale, t),
+      };
+      opacity = 0.7 * (1 - t);
+    } else {
+      // Resolved — fully invisible
+      pos = f.sealed;
+      opacity = 0;
+    }
+
+    f.el.style.transform = `translate(-50%,-50%) translate(${pos.x}px, ${pos.y}px) rotate(${pos.rot}deg) scale(${pos.scale})`;
+    f.el.style.opacity = opacity;
+  });
+
+  // Category labels visible during sort & map phases
+  const labelsVisible = p >= 0.26 && p < 0.55;
+  categoryLabels.forEach(lab => lab.classList.toggle('show', labelsVisible));
+
+  // Calm card appears during Seal phase
+  const cardVisible = p >= 0.68;
+  calmCard.classList.toggle('show', cardVisible);
+}
+
+let ticking = false;
+function onScroll(){
+  if(!ticking){ requestAnimationFrame(()=>{ updateCollapse(); ticking=false; }); ticking=true; }
+}
+window.addEventListener('scroll', onScroll, {passive:true});
+window.addEventListener('resize', updateCollapse, {passive:true});
+updateCollapse();
+
+/* ───── FORM HANDLING ─────
+   Both forms POST to Formspree via fetch so the page doesn't full-reload.
+   Submissions arrive at the configured destination email.
+*/
+function wireForm(formId){
+  const form = document.getElementById(formId);
+  if(!form) return;
+  form.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const btn = form.querySelector('button[type="submit"]');
+    const origHTML = btn.innerHTML;
+    const origBg = btn.style.background;
+    const origColor = btn.style.color;
+    btn.innerHTML = 'Sending…';
+    btn.disabled = true;
+    btn.style.background = '';
+    btn.style.color = '';
+    const resetBtn = ()=>{
+      btn.innerHTML = origHTML;
+      btn.disabled = false;
+      btn.style.background = origBg;
+      btn.style.color = origColor;
+    };
+    try{
+      const res = await fetch(form.action, {
+        method:'POST',
+        body:new FormData(form),
+        headers:{'Accept':'application/json'}
+      });
+      if(res.ok){
+        btn.innerHTML = '✓ Sent · we\'ll be in touch';
+        btn.style.background = 'var(--acc)';
+        btn.style.color = '#000';
+        form.reset();
+        setTimeout(resetBtn, 4000);
+      } else {
+        btn.innerHTML = '✕ Couldn\'t send — email hello@loxeai.com';
+        btn.style.background = 'var(--acc-red)';
+        btn.style.color = '#fff';
+        setTimeout(resetBtn, 5000);
+      }
+    } catch(err){
+      btn.innerHTML = '✕ Network error — please try again';
+      btn.style.background = 'var(--acc-red)';
+      btn.style.color = '#fff';
+      setTimeout(resetBtn, 5000);
+    }
+  });
+}
+wireForm('auditorForm');
+wireForm('contactForm');
+</script>
+</body>
+</html>

@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Privacy — LoxeAI</title>
+<meta name="description" content="What we collect, what we store, how long we keep it, and what we never touch. Written plainly." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,200;0,9..144,300;0,9..144,400;1,9..144,200;1,9..144,300&family=JetBrains+Mono:wght@300;400;500&family=Inter+Tight:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0c0d;
+    --bg-1:#0e1112;
+    --bg-2:#13171a;
+    --bg-deep:#06080a;
+    --line:#1a1f23;
+    --line-2:#262d33;
+    --ink:#ece9e0;
+    --ink-2:#9ea59f;
+    --ink-3:#5e6661;
+    --ink-4:#363c40;
+    --acc:#bfff5a;
+    --acc-warm:#e8c07a;
+    --acc-red:#ff6a55;
+    --acc-cool:#7ab9ff;
+    --display:'Fraunces', serif;
+    --mono:'JetBrains Mono', ui-monospace, monospace;
+    --sans:'Inter Tight', system-ui, sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--bg);color:var(--ink);font-family:var(--sans);font-weight:300;
+    -webkit-font-smoothing:antialiased;overflow-x:hidden;
+    background-image:
+      radial-gradient(ellipse at 20% 0%, rgba(191,255,90,0.03), transparent 50%);
+  }
+  body::before{
+    content:'';position:fixed;inset:0;pointer-events:none;z-index:1000;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/><feColorMatrix values='0 0 0 0 0.92 0 0 0 0 0.9 0 0 0 0 0.85 0 0 0 0.4 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/></svg>");
+    opacity:.06;mix-blend-mode:overlay;
+  }
+  ::selection{background:var(--acc);color:#000}
+  a{color:inherit;text-decoration:none}
+
+  /* NAV */
+  .nav{
+    position:fixed;top:0;left:0;right:0;z-index:100;
+    display:flex;align-items:center;justify-content:space-between;
+    padding:18px 32px;backdrop-filter:blur(14px);
+    background:rgba(10,12,13,0.55);border-bottom:1px solid var(--line);
+  }
+  .brand{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-size:13px;letter-spacing:0.02em;font-weight:500}
+  .brand-mark{width:22px;height:22px}
+  .brand-mark svg{width:100%;height:100%;display:block}
+  .brand-tag{color:var(--ink-3);font-size:10px;letter-spacing:0.2em;text-transform:uppercase;border-left:1px solid var(--line-2);padding-left:10px;margin-left:4px}
+  .nav-back{font-family:var(--mono);font-size:12px;color:var(--ink-2);transition:color .2s;display:flex;align-items:center;gap:8px}
+  .nav-back:hover{color:var(--ink)}
+  @media(max-width:780px){.nav{padding:14px 18px}}
+
+  /* HEADER */
+  .page-header{
+    padding:180px 32px 80px;max-width:980px;margin:0 auto;position:relative;
+  }
+  @media(max-width:780px){.page-header{padding:130px 18px 50px}}
+  .eyebrow{
+    font-family:var(--mono);font-size:11px;letter-spacing:0.3em;text-transform:uppercase;color:var(--acc);
+    margin-bottom:32px;display:flex;align-items:center;gap:14px;
+  }
+  .eyebrow::before{content:'';width:36px;height:1px;background:var(--acc)}
+  h1{
+    font-family:var(--display);font-weight:200;
+    font-size:clamp(48px,7vw,96px);line-height:0.98;letter-spacing:-0.02em;
+    margin-bottom:32px;word-spacing:0.02em;
+  }
+  h1 em{font-style:italic;color:var(--ink-2);margin:0 0.04em}
+  h1 .accent{color:var(--acc);font-style:normal;font-weight:300}
+  .page-lede{font-size:19px;line-height:1.55;color:var(--ink-2);max-width:700px;font-weight:300}
+  .updated{
+    font-family:var(--mono);font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:var(--ink-3);
+    margin-top:40px;padding-top:24px;border-top:1px solid var(--line);
+  }
+
+  /* CONTENT */
+  .content{
+    max-width:980px;margin:0 auto;padding:40px 32px 120px;
+    display:grid;grid-template-columns:200px 1fr;gap:80px;align-items:start;
+  }
+  @media(max-width:980px){.content{grid-template-columns:1fr;gap:40px;padding:30px 18px 80px}}
+
+  .sidebar{
+    position:sticky;top:120px;
+    font-family:var(--mono);font-size:11px;letter-spacing:0.1em;
+    display:flex;flex-direction:column;gap:12px;
+  }
+  @media(max-width:980px){.sidebar{position:static;flex-direction:row;flex-wrap:wrap;gap:8px;padding-bottom:24px;border-bottom:1px solid var(--line)}}
+  .sidebar a{
+    color:var(--ink-3);padding:8px 0;border-left:1px solid var(--line);padding-left:14px;
+    transition:all .25s;text-transform:uppercase;
+  }
+  @media(max-width:980px){.sidebar a{border-left:none;border:1px solid var(--line);padding:8px 12px}}
+  .sidebar a:hover{color:var(--ink);border-color:var(--acc)}
+  .sidebar a.active{color:var(--acc);border-color:var(--acc)}
+
+  .article section{margin-bottom:72px;scroll-margin-top:120px}
+  .article h2{
+    font-family:var(--display);font-weight:300;
+    font-size:clamp(30px,3.6vw,44px);line-height:1.1;letter-spacing:-0.015em;
+    margin-bottom:24px;word-spacing:0.02em;
+  }
+  .article h2 em{font-style:italic;color:var(--ink-2);margin:0 0.04em}
+  .article h2 .accent{color:var(--acc);font-style:normal}
+  .article p{
+    font-size:17px;line-height:1.7;color:var(--ink-2);margin-bottom:18px;max-width:680px;
+  }
+  .article p strong{color:var(--ink);font-weight:400}
+  .article ul{list-style:none;margin:20px 0;max-width:680px}
+  .article ul li{
+    padding:12px 0 12px 24px;border-bottom:1px dashed var(--line);
+    font-size:15px;line-height:1.6;color:var(--ink-2);position:relative;
+  }
+  .article ul li::before{
+    content:'—';position:absolute;left:0;color:var(--acc);font-family:var(--mono);
+  }
+  .article ul li:last-child{border-bottom:none}
+  .article ul li strong{color:var(--ink);font-weight:400}
+
+  /* Callout blocks */
+  .callout{
+    border:1px solid var(--line-2);background:var(--bg-1);
+    padding:28px 32px;margin:28px 0;position:relative;max-width:720px;
+  }
+  .callout.accent{border-color:rgba(191,255,90,0.3);box-shadow:0 0 60px rgba(191,255,90,0.04)}
+  .callout.warn{border-color:rgba(232,192,122,0.3)}
+  .callout-label{
+    font-family:var(--mono);font-size:10px;letter-spacing:0.2em;text-transform:uppercase;
+    color:var(--ink-3);margin-bottom:10px;
+  }
+  .callout.accent .callout-label{color:var(--acc)}
+  .callout.warn .callout-label{color:var(--acc-warm)}
+  .callout-text{font-size:15px;line-height:1.6;color:var(--ink)}
+  .callout-text strong{color:var(--ink);font-weight:500}
+
+  /* Two-column fact grid */
+  .facts{
+    display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);
+    border:1px solid var(--line);margin:28px 0;
+  }
+  @media(max-width:780px){.facts{grid-template-columns:1fr}}
+  .fact{background:var(--bg);padding:24px 26px}
+  .fact-label{font-family:var(--mono);font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-3);margin-bottom:10px}
+  .fact-value{font-family:var(--display);font-size:22px;font-weight:300;line-height:1.3;color:var(--ink);letter-spacing:-0.01em}
+  .fact-value .accent{color:var(--acc)}
+  .fact-sub{font-size:13px;color:var(--ink-2);margin-top:8px;line-height:1.5}
+
+  /* Contact strip */
+  .contact-strip{
+    border-top:1px solid var(--line);margin-top:60px;padding-top:40px;
+    display:flex;justify-content:space-between;align-items:center;gap:24px;flex-wrap:wrap;
+  }
+  .contact-strip .l{font-family:var(--display);font-size:22px;font-weight:300;font-style:italic;color:var(--ink-2)}
+  .contact-strip .l b{color:var(--ink);font-weight:400;font-style:normal}
+  .btn{
+    font-family:var(--mono);font-size:12px;letter-spacing:0.04em;padding:14px 22px;
+    border:1px solid var(--line-2);transition:all .3s;display:inline-flex;align-items:center;gap:10px;
+    text-transform:uppercase;
+  }
+  .btn-primary{background:var(--acc);color:#000;border-color:var(--acc);font-weight:500}
+  .btn-primary:hover{background:#d4ff7a;transform:translateY(-1px)}
+
+  /* FOOTER */
+  footer{
+    border-top:1px solid var(--line);padding:40px 32px;
+    display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;
+    color:var(--ink-3);letter-spacing:0.1em;text-transform:uppercase;flex-wrap:wrap;gap:16px;
+    max-width:1400px;margin:0 auto;
+  }
+  @media(max-width:780px){footer{padding:30px 18px}}
+  footer a{transition:color .2s}
+  footer a:hover{color:var(--ink)}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <a href="/" class="brand">
+    <div class="brand-mark">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <rect x="3" y="3" width="18" height="18" stroke="var(--acc)"/>
+        <rect x="7" y="7" width="10" height="10" stroke="var(--ink)"/>
+        <line x1="3" y1="12" x2="7" y2="12" stroke="var(--acc)"/>
+        <line x1="17" y1="12" x2="21" y2="12" stroke="var(--acc)"/>
+        <line x1="12" y1="3" x2="12" y2="7" stroke="var(--acc)"/>
+        <line x1="12" y1="17" x2="12" y2="21" stroke="var(--acc)"/>
+      </svg>
+    </div>
+    LoxeAI
+    <span class="brand-tag">Privacy</span>
+  </a>
+  <a href="/" class="nav-back">← Back to site</a>
+</nav>
+
+<header class="page-header">
+  <div class="eyebrow">— Privacy, written plainly</div>
+  <h1>What we store,<br>and <em>why</em> we <span class="accent">store it.</span></h1>
+  <p class="page-lede">
+    We store data. We have to — the report can't be generated without it. Here's exactly what, for how long, and what it's used for. No dark patterns. No buried clauses.
+  </p>
+  <div class="updated">Last updated · April 23, 2026</div>
+</header>
+
+<div class="content">
+
+  <!-- Sidebar nav -->
+  <aside class="sidebar">
+    <a href="#collect">01 — What we collect</a>
+    <a href="#store">02 — Where we store it</a>
+    <a href="#retention">03 — How long</a>
+    <a href="#never">04 — What we never touch</a>
+    <a href="#aws">05 — AWS access</a>
+    <a href="#rights">06 — Your rights</a>
+    <a href="#contact">07 — Contact</a>
+  </aside>
+
+  <!-- Article -->
+  <article class="article">
+
+    <section id="collect">
+      <h2>01 — <em>What</em> we collect</h2>
+      <p>
+        When you book a demo or engage in a pilot, we collect the minimum we need to talk to you and run the scan: <strong>your name, work email, and company name</strong>. That's the account-level data.
+      </p>
+      <p>
+        During a pilot, the Evidence Tracer agent connects to your AWS account via a read-only IAM role. It collects <strong>infrastructure configuration metadata</strong> from a defined set of AWS services (IAM, S3, CloudTrail, AWS Config, EC2, CloudWatch, KMS, Lambda, RDS, SNS) — things like whether MFA is enforced, whether buckets are encrypted, whether CloudTrail is multi-region. That's the evidence data.
+      </p>
+      <p>
+        The report that gets generated from that evidence is also stored, alongside the raw API responses it traces to — so every finding remains independently verifiable.
+      </p>
+    </section>
+
+    <section id="store">
+      <h2>02 — <em>Where</em> we store it</h2>
+      <p>
+        Evidence data lives in <strong>Cloudflare D1</strong>, a SQLite-compatible edge database. The scan itself runs as a stateless Cloudflare Worker — compute happens at the edge, data is written to D1 only as long as the pilot lifecycle requires it.
+      </p>
+      <div class="callout">
+        <div class="callout-label">— To be clear</div>
+        <div class="callout-text">
+          We do not run "zero persistence" infrastructure — we've seen that claim made and it's rarely true. What we do is scope persistence tightly: only what's needed to generate the report and support you during the engagement.
+        </div>
+      </div>
+      <p>
+        Account-level data (name, email, company) is stored separately from evidence data and is retained for standard business communications.
+      </p>
+    </section>
+
+    <section id="retention">
+      <h2>03 — How <em>long</em> we keep it</h2>
+      <div class="facts">
+        <div class="fact">
+          <div class="fact-label">— Evidence data</div>
+          <div class="fact-value"><span class="accent">30 days</span> after report delivery</div>
+          <div class="fact-sub">Raw AWS API responses, scan state, intermediate analysis artifacts</div>
+        </div>
+        <div class="fact">
+          <div class="fact-label">— Final report</div>
+          <div class="fact-value"><span class="accent">30 days</span> after report delivery</div>
+          <div class="fact-sub">The auditor-facing package. Can be extended on request.</div>
+        </div>
+        <div class="fact">
+          <div class="fact-label">— Account data</div>
+          <div class="fact-value">Standard business retention</div>
+          <div class="fact-sub">Name, email, company name — kept for communications and billing history</div>
+        </div>
+        <div class="fact">
+          <div class="fact-label">— On your request</div>
+          <div class="fact-value"><span class="accent">Deleted</span> — any time</div>
+          <div class="fact-sub">One email. We confirm in writing once it's done.</div>
+        </div>
+      </div>
+      <p>
+        We chose 30 days because it gives you a buffer for auditor follow-up questions and report iteration without holding onto data longer than necessary. If you need us to delete sooner, say the word. If you need us to retain longer for a live auditor engagement, that's a decision we make together in writing.
+      </p>
+    </section>
+
+    <section id="never">
+      <h2>04 — What we <em>never</em> touch</h2>
+      <p>
+        The IAM role you provision grants read-only permissions scoped to configuration metadata. By design, we cannot access:
+      </p>
+      <ul>
+        <li><strong>Application data</strong> — the contents of your databases, caches, or application layer</li>
+        <li><strong>Customer data</strong> — anything stored on behalf of your end users</li>
+        <li><strong>Secrets or credentials</strong> — we don't read the contents of Secrets Manager, Parameter Store secure strings, or KMS-encrypted payloads</li>
+        <li><strong>File contents</strong> — we can see that an S3 bucket exists and how it's configured; we never read objects inside it</li>
+        <li><strong>Write permissions</strong> — the role is read-only at the IAM-policy level. We couldn't modify your account even if we wanted to</li>
+      </ul>
+      <div class="callout accent">
+        <div class="callout-label">— What read-only means in practice</div>
+        <div class="callout-text">
+          We call APIs like <strong>iam:GetAccountSummary</strong>, <strong>s3:GetBucketEncryption</strong>, <strong>cloudtrail:DescribeTrails</strong>. We never call <strong>s3:GetObject</strong>, <strong>secretsmanager:GetSecretValue</strong>, or anything that exposes payloads. The role you deploy enforces this at the AWS policy layer — not our honor system.
+        </div>
+      </div>
+    </section>
+
+    <section id="aws">
+      <h2>05 — How <em>AWS access</em> works</h2>
+      <p>
+        The agent uses <strong>AWS STS AssumeRole</strong> with an ExternalId trust anchor. You provision a read-only role in your own AWS account using a CloudFormation template we provide; the trust policy names our principal, and the ExternalId prevents confused-deputy attacks.
+      </p>
+      <p>
+        We don't store long-lived AWS credentials. Ever. Each scan requests short-lived session credentials from STS, uses them for the scan duration, and discards them. If you revoke the role — at any time, for any reason — all access ends immediately.
+      </p>
+      <p>
+        AWS API requests are signed with <strong>AWS Signature Version 4</strong> and transmitted over TLS 1.3. Responses are processed at Cloudflare's edge and written to D1 for the duration of the retention window above.
+      </p>
+    </section>
+
+    <section id="rights">
+      <h2>06 — <em>Your</em> rights</h2>
+      <ul>
+        <li><strong>Access</strong> — request a copy of everything we hold on you or your company</li>
+        <li><strong>Deletion</strong> — request permanent deletion of all evidence data, reports, and account records</li>
+        <li><strong>Correction</strong> — request changes to inaccurate account-level data</li>
+        <li><strong>Portability</strong> — request your data in a standard format</li>
+        <li><strong>Revocation</strong> — revoke the IAM role in your AWS account at any time; access ends immediately</li>
+      </ul>
+      <p>
+        We do not sell your information. We do not share it with third parties for marketing. We use standard subprocessors for infrastructure (Cloudflare for compute and storage, Anthropic for AI reasoning) and those are the only parties in the data path. If that list changes, we update this page.
+      </p>
+    </section>
+
+    <section id="contact">
+      <h2>07 — <em>Contact</em></h2>
+      <p>
+        Questions, deletion requests, or anything you want clarified — email directly or book a call.
+      </p>
+      <div class="contact-strip">
+        <div class="l">Talk to the founder. <b>Directly.</b></div>
+        <a href="https://calendar.app.google/YuFNRmSYWtcpHaZ87" target="_blank" rel="noopener" class="btn btn-primary">Book a call →</a>
+      </div>
+    </section>
+
+  </article>
+</div>
+
+<footer>
+  <span>© 2026 LoxeAI · Boston, MA</span>
+  <div style="display:flex;gap:24px;flex-wrap:wrap">
+    <a href="/">Home</a>
+    <a href="methodology.html">Methodology</a>
+    <a href="privacy.html">Privacy</a>
+    <a href="/#contact">Contact</a>
+  </div>
+</footer>
+
+<script>
+  // Sidebar active state
+  const sections = document.querySelectorAll('.article section');
+  const links = document.querySelectorAll('.sidebar a');
+  const io = new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{
+      if(e.isIntersecting){
+        const id = e.target.id;
+        links.forEach(l=>l.classList.toggle('active', l.getAttribute('href')==='#'+id));
+      }
+    });
+  },{rootMargin:'-30% 0px -60% 0px'});
+  sections.forEach(s=>io.observe(s));
+</script>
+
+</body>
